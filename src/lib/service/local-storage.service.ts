@@ -13,10 +13,13 @@ export class LocalStorageService extends WebStorageService {
     super(localStorageUtility);
     this._changes =
       merge(fromEvent<NgxStorageEvent>(window, 'storage')
-          .pipe(
-            filter((event: NgxStorageEvent) => event.storageArea === localStorage),
-            map((event: NgxStorageEvent) => this.mapNativeEvent(event)),
-          ),
+        .pipe(
+          filter((event: NgxStorageEvent) => event.storageArea === localStorage),
+          map((event: NgxStorageEvent) => {
+            // @ts-ignore
+            return this.mapNativeEvent(event);
+          }),
+        ),
         localStorageUtility.changes);
   }
 }

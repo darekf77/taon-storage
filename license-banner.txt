@@ -1,4 +1,0 @@
-/**
- * @license ngx-store
- * ISC license
- */

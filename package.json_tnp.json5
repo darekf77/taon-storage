@@ -1,0 +1,30 @@
+{
+  resources: [],
+  overrided: {
+    linkedFolders: [],
+    ignoreDepsPattern: ["*"],
+    includeAsDev: [],
+    includeOnly: [
+      "@types/lodash.get",
+      "@types/lodash.isequal",
+      "@types/lodash.merge",
+      "@types/lodash.set",
+      "@types/node",
+      "@types/lodash.get",
+      "@types/lodash.isequal",
+      "@types/lodash.merge",
+      "@types/lodash.set",
+      "@types/node",
+      "ts-debug",
+    ],
+    dependencies: {},
+  },
+  linkedProjects: [],
+  libReleaseOptions: {
+    nodts: false,
+    obscure: false,
+    ugly: false,
+  },
+  type: "isomorphic-lib",
+  version: "v3",
+}

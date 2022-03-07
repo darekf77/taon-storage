@@ -1,9 +1,9 @@
 import { WebStorageService } from './webstorage.service';
 import { Config } from '../config/config';
 
-const _get = require('lodash.get');
-const _set = require('lodash.set');
-const _merge = require('lodash.merge');
+import * as  _get from 'lodash.get';
+import * as  _set from 'lodash.set';
+import * as  _merge from 'lodash.merge';
 
 export class Resource<T> {
   constructor(protected service: WebStorageService, protected readonly key: string) {
@@ -48,7 +48,7 @@ export class Resource<T> {
   }
 
   protected get fullValue(): T {
-    return this.considerDefault(this.service.utility.get(this.key, {prefix: this._prefix}));
+    return this.considerDefault(this.service.utility.get(this.key, { prefix: this._prefix }));
   }
 
   protected get pathString(): string {
@@ -111,8 +111,8 @@ export class Resource<T> {
    * @returns {this}
    */
   public changePrefix(prefix: string): this {
-    this.service.utility.set(this.key, this.fullValue, {prefix});
-    this.service.utility.remove(this.key, {prefix: this._prefix});
+    this.service.utility.set(this.key, this.fullValue, { prefix });
+    this.service.utility.remove(this.key, { prefix: this._prefix });
     return this.setPrefix(prefix);
   }
 
@@ -139,7 +139,7 @@ export class Resource<T> {
     if (this.pathString) {
       value = _set(this.fullValue as any as object, this.pathString, this.considerDefault(value)) as any as T;
     }
-    this.service.utility.set(this.key, this.considerDefault(value), {prefix: this._prefix});
+    this.service.utility.set(this.key, this.considerDefault(value), { prefix: this._prefix });
     return this;
   }
 
@@ -170,7 +170,7 @@ export class Resource<T> {
   }
 
   protected readValue(): T {
-    const value = this.service.utility.get(this.key, {prefix: this._prefix});
+    const value = this.service.utility.get(this.key, { prefix: this._prefix });
     if (this.pathString) {
       return _get(value, this.pathString);
     }

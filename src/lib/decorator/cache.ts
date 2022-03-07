@@ -4,7 +4,7 @@ import { WebStorageServiceInterface } from '../service/webstorage.interface';
 import { DecoratorConfig } from '../ngx-store.types';
 import { WebStorageUtility } from '../utility/webstorage.utility';
 
-const isEqual = require('lodash.isequal');
+import * as isEqual from 'lodash.isequal';
 
 export class Cache {
   public static items: Map<string, CacheItem> = new Map();

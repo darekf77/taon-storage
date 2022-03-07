@@ -13,10 +13,13 @@ export class SessionStorageService extends WebStorageService {
     super(sessionStorageUtility);
     this._changes =
       merge(fromEvent<NgxStorageEvent>(window, 'storage')
-          .pipe(
-            filter((event: NgxStorageEvent) => event.storageArea === sessionStorage),
-            map((event: NgxStorageEvent) => this.mapNativeEvent(event)),
-          ),
+        .pipe(
+          filter((event: NgxStorageEvent) => event.storageArea === sessionStorage),
+          map((event: NgxStorageEvent) => {
+            // @ts-ignore
+            return this.mapNativeEvent(event);
+          }),
+        ),
         sessionStorageUtility.changes);
   }
 }
