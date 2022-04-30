@@ -139,7 +139,7 @@
     "firedev-crud": "~13.0.21",
     "firedev-crud-deamon": "~13.0.13",
     "firedev-ports": "~13.0.15",
-    "firedev-storage": "~13.0.10",
+    "firedev-storage": "~13.0.11",
     "fkill": "6.1.0",
     "font-awesome": "4.7.0",
     "fs-extra": "8.1.0",
@@ -253,7 +253,7 @@
     "watch": "1.0.2",
     "zone.js": "~0.11.4"
   },
-  "lastBuildTagHash": "70dbdab8727a98b15a222fc8f503cb6fdee3749a",
+  "lastBuildTagHash": "a598a955a6f6a4973ac5ffaa681f28d613f7e5be",
   "license": "MIT",
   "private": false
 }
