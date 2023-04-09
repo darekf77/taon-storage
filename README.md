@@ -1,4 +1,4 @@
-# firedev storage
+# firedev storage (in progress)
 
 base on https://github.com/zoomsphere/ngx-store
 
