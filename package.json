@@ -1,7 +1,8 @@
 {
   "dependencies": {
-    "@types/node": "16.18.21",
-    "ts-debug": "1.3.0"
+    "immutable": "4.3.0",
+    "localforage": "1.10.0",
+    "ng2-logger": "~13.1.22"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~13.3.9",
@@ -61,6 +62,7 @@
     "@types/lodash": "4.14.92",
     "@types/lowdb": "1.0.6",
     "@types/mocha": "5.2.5",
+    "@types/node": "16.18.21",
     "@types/node-notifier": "5.4.0",
     "@types/oauth2orize": "1.8.0",
     "@types/password-hash": "1.2.19",
@@ -120,7 +122,7 @@
     "firedev-ports": "~13.1.41",
     "firedev-storage": "~13.1.30",
     "firedev-typeorm": "~13.1.25",
-    "firedev-ui": "~13.1.19",
+    "firedev-ui": "~13.1.20",
     "fkill": "6.1.0",
     "font-awesome": "4.7.0",
     "form-data": "4.0.0",
@@ -132,7 +134,6 @@
     "http-proxy": "1.16.2",
     "http-proxy-middleware": "0.19.1",
     "http-server": "0.11.1",
-    "immutable": "4.3.0",
     "incremental-compiler": "~13.1.23",
     "inquirer": "7.3.3",
     "inquirer-autocomplete-prompt": "1.3.0",
@@ -154,7 +155,6 @@
     "karma-jasmine": "4.0.0",
     "karma-jasmine-html-reporter": "1.7.0",
     "lnk": "1.0.1",
-    "localforage": "1.10.0",
     "lockfile": "1.0.4",
     "lodash": "4.17.4",
     "lodash-walk-object": "~13.1.42",
@@ -170,7 +170,6 @@
     "ng-packagr": "13.0.0",
     "ng-talkback": "~13.1.19",
     "ng2-file-upload": "1.3.0",
-    "ng2-logger": "~13.1.22",
     "ng2-rest": "~13.2.5",
     "ng4-icons": "~13.1.21",
     "ng4-modal": "~13.1.23",
@@ -227,6 +226,7 @@
     "tnp-helpers": "~13.1.30",
     "tnp-models": "~13.1.22",
     "tnp-ui": "~13.1.27",
+    "ts-debug": "1.3.0",
     "ts-loader": "2.3.1",
     "ts-node": "10.7.0",
     "tslib": "~2.3.0",
@@ -243,6 +243,6 @@
     "zone.js": "~0.11.4"
   },
   "name": "firedev-storage",
-  "version": "13.1.30",
+  "version": "13.2.31",
   "lastBuildTagHash": "f03cccec868a9c9eaf19d1dc397e18f1eb4d52d2"
 }

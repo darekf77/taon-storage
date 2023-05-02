@@ -5,20 +5,8 @@
     linkedFolders: [],
     ignoreDepsPattern: [],
     includeAsDev: [],
-    includeOnly: [
-      "@types/lodash.get",
-      "@types/lodash.isequal",
-      "@types/lodash.merge",
-      "@types/lodash.set",
-      "@types/node",
-      "@types/lodash.get",
-      "@types/lodash.isequal",
-      "@types/lodash.merge",
-      "@types/lodash.set",
-      "@types/node",
-      "ts-debug",
-    ],
-    dependencies: {},
+    includeOnly: ['ng2-logger', 'localforage', 'immutable'],
+    dependencies: {}
   },
 
   linkedProjects: [],
@@ -29,10 +17,10 @@
     nodts: false,
     obscure: false,
     ugly: false,
-    includeNodeModules: false,
+    includeNodeModules: false
   },
 
   smartContainerTarget: '',
-  type: "isomorphic-lib",
-  version: "v3",
+  type: 'isomorphic-lib',
+  version: 'v3'
 }
