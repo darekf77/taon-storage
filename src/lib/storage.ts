@@ -4,9 +4,9 @@ import * as localForge from 'localforage';
 
 
 import { Level, Log } from 'ng2-logger';
-import { Helpers } from 'tnp-core';
+import { Helpers, _ } from 'tnp-core';
 
-const storeName = 'firedev-ui- cache';
+const storeName = 'firedev-storage';
 
 const log = Log.create(storeName,
   Level.__NOTHING
@@ -16,13 +16,13 @@ const log = Log.create(storeName,
 //#region @browser
 const storLocalStorage = localForge.createInstance({
   driver: localForge.LOCALSTORAGE,
-  storeName: storeName + localForge.LOCALSTORAGE,
+  storeName: storeName + localForge.LOCALSTORAGE, // + _.kebabCase(window.location.origin),
 }) as any; // TODO UNCOMMENT any
 
 // @ts-ignore
 const storIndexdDb = localForge.createInstance({
   driver: localForge.INDEXEDDB,
-  storeName: storeName + localForge.INDEXEDDB,
+  storeName: storeName + localForge.INDEXEDDB, // + _.kebabCase(window.location.origin),
 }) as any; // TODO UNCOMMENT any
 
 //#region @browser
@@ -114,6 +114,14 @@ export function uncache<CLASS_FUNCTION = any>(onlyInThisComponentClass: CLASS_FU
 
 class FiredevStorage {
 
+  static get property() {
+    return new FiredevStorage();
+  }
+
+  constructor() {
+    log.i(`RUNNING CONSTRUCTOR!`)
+  }
+
   private onlyInThisComponentClass?: Function;
   private defaultValue: any;
   //#region @backend
@@ -136,6 +144,7 @@ class FiredevStorage {
   //#endregion
 
   withDefaultValue(defaultValue?: any) {
+    // log.i(`["${}"]`)
     return this.action(defaultValue, this.getEngine())
   }
 
@@ -229,22 +238,26 @@ class FiredevStorage {
         storageEngine.getItem(keyValue(this.onlyInThisComponentClass, memberName), (err, valFromDb) => {
           // target[memberName] = valFromDb;
           currentValue = transformFrom ? transformFrom(valFromDb) : valFromDb;
-          log.i(`setItemValue newvalue "${memberName}"`, valFromDb)
+          log.i(`["${memberName}"] set default value for `, valFromDb)
         })
       }
 
       if (defaultValue !== void 0) {
         storageEngine.getItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), (err, val) => {
+          log.i(`["${memberName}"] was set default value for  ? `, val)
           if (val) {
             setItemDefaultValue();
           } else {
-            storageEngine.setItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), true)
+            storageEngine.setItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), true, (err, v) => {
 
+            })
             storageEngine.setItem(keyValue(this.onlyInThisComponentClass, memberName),
-              transformTo ? transformTo(defaultValue) : defaultValue)
+              transformTo ? transformTo(defaultValue) : defaultValue, (err, val) => {
+
+              })
 
             currentValue = defaultValue;
-            log.i(`newvalue defaultValue "${memberName}"`, currentValue)
+            log.i(`["${memberName}"]  defaultValue "${memberName}"`, currentValue)
           }
         });
 
@@ -272,4 +285,4 @@ class FiredevStorage {
 }
 
 
-export const Stor = (new FiredevStorage() as Omit<FiredevStorage, 'for'>);
+export const Stor = FiredevStorage;
