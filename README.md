@@ -38,7 +38,7 @@ export class FiredevAdmin {
 ```
 
 
-## Storing things in indexdb in browser:
+## Storing things in indexddb in browser:
 
 ```ts
 import { Stor } from 'firedev-storage'
@@ -85,3 +85,11 @@ export class FiredevAdmin {
 }
 
 ```
+
+
+# TODO
+- json value in file
+- navitve storing browser files 
+- navitve storing browser blob
+- progress notifications service
+

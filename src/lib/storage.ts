@@ -2,6 +2,7 @@
 import * as localForge from 'localforage';
 //#endregion
 
+
 import { Level, Log } from 'ng2-logger';
 import { Helpers } from 'tnp-core';
 
@@ -11,16 +12,38 @@ const log = Log.create(storeName,
   Level.__NOTHING
 );
 
+
 //#region @browser
 const storLocalStorage = localForge.createInstance({
   driver: localForge.LOCALSTORAGE,
   storeName: storeName + localForge.LOCALSTORAGE,
-})
+}) as any; // TODO UNCOMMENT any
 
+// @ts-ignore
 const storIndexdDb = localForge.createInstance({
   driver: localForge.INDEXEDDB,
   storeName: storeName + localForge.INDEXEDDB,
-})
+}) as any; // TODO UNCOMMENT any
+
+//#region @browser
+export class SessionStor implements StorType {
+  setItem<T>(key: string, value: T, callback?: (err: any, value: T) => void): Promise<T> {
+    window.sessionStorage.setItem(key, value as any);
+    callback(void 0, value);
+    return void 0;
+  }
+  getItem<T>(key: string, callback?: (err: any, value: T) => void): Promise<T> {
+    const item = window.sessionStorage.getItem(key);
+    callback(void 0, item as any);
+    return Promise.resolve<T>(item as any);
+  }
+  removeItem(key: string, callback?: (err: any) => void): Promise<void> {
+    window.sessionStorage.removeItem(key);
+    return void 0;
+  }
+}
+const storSession = new SessionStor();
+//#endregion
 
 export type StorType = Partial<(typeof storIndexdDb)>;
 //#endregion
@@ -98,6 +121,7 @@ class FiredevStorage {
   //#endregion
   private engine: 'localstorage'
     | 'indexeddb'
+    | 'sessionstorage'
     //#region @backend
     | 'file'
     | 'json'
@@ -137,6 +161,8 @@ class FiredevStorage {
       //#region @browser
       case 'localstorage':
         return storLocalStorage;
+      case 'sessionstorage':
+        return storSession;
       case 'indexeddb':
         return storIndexdDb;
       //#endregion
@@ -158,6 +184,10 @@ class FiredevStorage {
       },
       get localstorage() {
         that.engine = 'localstorage';
+        return that as Omit<FiredevStorage, 'in'>;
+      },
+      get sessionstorage() {
+        that.engine = 'sessionstorage';
         return that as Omit<FiredevStorage, 'in'>;
       },
       //#region @backend
