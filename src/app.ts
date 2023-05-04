@@ -1,14 +1,14 @@
 //#region @notForNpm
 
 import { List } from 'immutable';
-
+import { Stor } from './lib';
 
 
 
 //#region @browser
 import { NgModule } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
-import { Stor } from './lib';
+
 
 @Component({
   selector: 'app-firedev-storage',
@@ -33,7 +33,7 @@ export class FiredevStorageModule { }
 
 class MyBackend {
 
-  @Stor.in.jsonFile('~/pinguin.json').withDefaultValue(List([]))
+  @Stor.property.in.jsonFile('~/pinguin.json').withDefaultValue(List([]))
   myListOfValue: List<string>;
 
 }
