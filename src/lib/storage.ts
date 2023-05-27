@@ -13,16 +13,36 @@ const log = Log.create(storeName,
 );
 
 
+const environment = {} as any;
+//#region @backend
+// @ts-ignore
+environment = global['ENV'];
+//#endregion
+//#region @browser
+// @ts-ignore
+environment = window['ENV'];
+//#endregion
+
+
 //#region @browser
 const storLocalStorage = localForge.createInstance({
   driver: localForge.LOCALSTORAGE,
-  storeName: storeName + localForge.LOCALSTORAGE, // + _.kebabCase(window.location.origin),
+  storeName: [
+    storeName,
+    'LOCALSTORAGE',
+    _.kebabCase(environment?.currentProjectGenericName),
+  ].join('_')
+  , // + _.kebabCase(window.location.origin),
 }) as any; // TODO UNCOMMENT any
 
 // @ts-ignore
 const storIndexdDb = localForge.createInstance({
   driver: localForge.INDEXEDDB,
-  storeName: storeName + localForge.INDEXEDDB, // + _.kebabCase(window.location.origin),
+  storeName: [
+    storeName,
+    'INDEXEDDB',
+    _.kebabCase(environment?.currentProjectGenericName),
+  ].join('_')
 }) as any; // TODO UNCOMMENT any
 
 //#region @browser
