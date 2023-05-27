@@ -13,7 +13,7 @@ const log = Log.create(storeName,
 );
 
 
-const environment = {} as any;
+let environment = {} as any;
 //#region @backend
 // @ts-ignore
 environment = global['ENV'];
