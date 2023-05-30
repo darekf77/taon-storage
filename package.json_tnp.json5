@@ -6,7 +6,8 @@
     ignoreDepsPattern: [],
     includeAsDev: [],
     includeOnly: ['ng2-logger', 'localforage', 'immutable'],
-    dependencies: {}
+    dependencies: {},
+    npmFixes: [],
   },
 
   linkedProjects: [],
