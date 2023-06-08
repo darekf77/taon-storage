@@ -23,5 +23,5 @@
 
   smartContainerTarget: '',
   type: 'isomorphic-lib',
-  version: 'v3'
+  version: 'v16'
 }
