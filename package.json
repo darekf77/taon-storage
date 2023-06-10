@@ -1,4 +1,31 @@
 {
+  "tnp": {
+    "resources": [],
+    "overrided": {
+      "linkedFolders": [],
+      "ignoreDepsPattern": [],
+      "includeAsDev": [],
+      "includeOnly": [
+        "ng2-logger",
+        "localforage",
+        "immutable"
+      ],
+      "dependencies": {},
+      "npmFixes": []
+    },
+    "linkedProjects": [],
+    "smartContainerBuildTarget": "",
+    "linkedRepos": [],
+    "libReleaseOptions": {
+      "nodts": false,
+      "obscure": false,
+      "ugly": false,
+      "includeNodeModules": false
+    },
+    "smartContainerTarget": "",
+    "type": "isomorphic-lib",
+    "version": "v4"
+  },
   "dependencies": {
     "immutable": "4.3.0",
     "localforage": "1.10.0",
