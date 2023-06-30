@@ -156,7 +156,7 @@
     "firedev-crud": "~16.0.54",
     "firedev-crud-deamon": "~16.0.44",
     "firedev-ports": "~16.0.49",
-    "firedev-storage": "~16.0.40",
+    "firedev-storage": "~16.0.41",
     "firedev-type-sql": "~16.0.2",
     "firedev-typeorm": "~16.0.39",
     "firedev-ui": "~16.0.7",
@@ -293,5 +293,5 @@
   },
   "name": "firedev-storage",
   "version": "16.0.41",
-  "lastBuildTagHash": "948c3c07db9a7a6fbe55bb4fe82a39cd5334b5fe"
+  "lastBuildTagHash": "75562be5bb44aaa7448efcaaf49e1a53c518278c"
 }
