@@ -1,122 +1,19 @@
-//#region @browser
-import * as localForge from 'localforage';
-//#endregion
-
-
+//#region imports
 import { Level, Log } from 'ng2-logger';
 import { Helpers, _ } from 'tnp-core';
+import { storIndexdDb, storLocalStorage, storeName } from './constants';
+import { keyDefaultValueAreadySet, keyValue } from './helpers';
+import { Models } from './models';
+import { FileStor } from './file-stor';
+//#endregion
 
-const storeName = 'firedev-storage';
-
+//#region constants
 const log = Log.create(storeName,
-  Level.__NOTHING
+  Level.INFO
 );
-
-
-let environment = {} as any;
-//#region @backend
-// @ts-ignore
-environment = global['ENV'];
-//#endregion
-//#region @browser
-// @ts-ignore
-environment = window['ENV'];
 //#endregion
 
-
-//#region @browser
-const storLocalStorage = localForge.createInstance({
-  driver: localForge.LOCALSTORAGE,
-  storeName: [
-    storeName,
-    'LOCALSTORAGE',
-    _.kebabCase(environment?.currentProjectGenericName),
-  ].join('_')
-  , // + _.kebabCase(window.location.origin),
-}) as any; // TODO UNCOMMENT any
-
-// @ts-ignore
-const storIndexdDb = localForge.createInstance({
-  driver: localForge.INDEXEDDB,
-  storeName: [
-    storeName,
-    'INDEXEDDB',
-    _.kebabCase(environment?.currentProjectGenericName),
-  ].join('_')
-}) as any; // TODO UNCOMMENT any
-
-//#region @browser
-export class SessionStor implements StorType {
-  setItem<T>(key: string, value: T, callback?: (err: any, value: T) => void): Promise<T> {
-    window.sessionStorage.setItem(key, value as any);
-    callback(void 0, value);
-    return void 0;
-  }
-  getItem<T>(key: string, callback?: (err: any, value: T) => void): Promise<T> {
-    const item = window.sessionStorage.getItem(key);
-    callback(void 0, item as any);
-    return Promise.resolve<T>(item as any);
-  }
-  removeItem(key: string, callback?: (err: any) => void): Promise<void> {
-    window.sessionStorage.removeItem(key);
-    return void 0;
-  }
-}
-const storSession = new SessionStor();
-//#endregion
-
-export type StorType = Partial<(typeof storIndexdDb)>;
-//#endregion
-
-//#region @backend
-export class FileStor
-  //#region @browser
-  implements StorType
-//#endregion
-{
-  constructor(
-    private filePath: string,
-    private useJSON = false
-  ) { }
-
-  setItem<T>(key: string, value: T, callback?: (err: any, value: T) => void): Promise<T> {
-    if (this.useJSON) {
-      Helpers.writeJson(this.filePath, value as any);
-      callback(void 0, value);
-    } else {
-      Helpers.writeFile(this.filePath, value as any);
-      callback(void 0, value);
-    }
-    return void 0;
-  }
-  getItem<T>(key: string, callback?: (err: any, value: T) => void): Promise<T> {
-    if (this.useJSON) {
-      callback(void 0, Helpers.readJson(this.filePath));
-    } else {
-      callback(void 0, Helpers.readFile(this.filePath) as any);
-    }
-    return void 0;
-  }
-  removeItem(key: string, callback?: (err: any) => void): Promise<void> {
-    Helpers.remove(this.filePath, true);
-    callback(void 0);
-    return void 0;
-  }
-}
-//#endregion
-
-
-const keyValue = (classFun, memberName) => {
-  // console.log('classname',classFun.name)
-  const res = `firedev.localstorage.class.${classFun.name}.prop.${memberName}`
-  return res;
-}
-
-const keyDefaultValueAreadySet = (classFun, memberName) => {
-  const res = keyValue(classFun, memberName) + 'defaultvalueisset';
-  return res;
-}
-
+//#region public api / uncahce
 export function uncache<CLASS_FUNCTION = any>(onlyInThisComponentClass: CLASS_FUNCTION, propertyValueToDeleteFromCache: keyof CLASS_FUNCTION) {
   if (!onlyInThisComponentClass) { // @ts-ignore
     onlyInThisComponentClass = { name: '__GLOBAL_NAMESPACE__' };
@@ -130,81 +27,40 @@ export function uncache<CLASS_FUNCTION = any>(onlyInThisComponentClass: CLASS_FU
     //#endregion
   ])
 }
-
+//#endregion
 
 class FiredevStorage {
+
+  //#region static
+  private static pendingOperatins: Models.PendingOperation[] = [];
+  public static async awaitPendingOperatios(): Promise<void> {
+    console.log(`WAITING PENDING OPERATIONS: ${this.pendingOperatins.length}`)
+    const operations = this.pendingOperatins;
+    this.pendingOperatins.length = 0;
+    await Promise.all(operations);
+    console.log(`WAITING PENDING DONE: ${this.pendingOperatins.length}`);
+  }
 
   static get property() {
     return new FiredevStorage();
   }
+  //#endregion
 
-  constructor() {
-    log.i(`RUNNING CONSTRUCTOR!`)
-  }
-
+  //#region private fields
   private onlyInThisComponentClass?: Function;
   private defaultValue: any;
+  private engine: Models.StorgeEngine;
+
+
+  //#region private fields / file path
   //#region @backend
   private filePath: string;
   //#endregion
-  private engine: 'localstorage'
-    | 'indexeddb'
-    | 'sessionstorage'
-    //#region @backend
-    | 'file'
-    | 'json'
-    //#endregion
-    ;
-
-  //#region @browser
-  for(onlyInThisComponentClass?: Function) {
-    this.onlyInThisComponentClass = onlyInThisComponentClass;
-    return this as Omit<FiredevStorage, 'for' | 'in'>;
-  }
+  //#endregion
   //#endregion
 
-  withDefaultValue(defaultValue?: any) {
-    // log.i(`["${}"]`)
-    return this.action(defaultValue, this.getEngine())
-  }
-
-  withOptions(options: {
-    /**
-     * default value
-     */
-    defaultValue?: any;
-    transformFrom?: (valueFromDb: any) => any,
-    transformTo?: (valueThatGetToDB: any) => any,
-  }) {
-    const { defaultValue, transformFrom, transformTo } = (options || {}) as any;
-    return this.action(
-      defaultValue ? defaultValue : this.defaultValue,
-      this.getEngine(),
-      transformFrom,
-      transformTo,
-    );
-  }
-
-  private getEngine() {
-    switch (this.engine) {
-      //#region @browser
-      case 'localstorage':
-        return storLocalStorage;
-      case 'sessionstorage':
-        return storSession;
-      case 'indexeddb':
-        return storIndexdDb;
-      //#endregion
-      //#region @backend
-      case 'file':
-        return new FileStor(this.filePath);
-      case 'json':
-        return new FileStor(this.filePath, true);
-      //#endregion
-    }
-  }
-
-  get in() {
+  //#region public getters
+  public get in() {
     const that = this;
     return {
       get indexedb() {
@@ -213,10 +69,6 @@ class FiredevStorage {
       },
       get localstorage() {
         that.engine = 'localstorage';
-        return that as Omit<FiredevStorage, 'in'>;
-      },
-      get sessionstorage() {
-        that.engine = 'sessionstorage';
         return that as Omit<FiredevStorage, 'in'>;
       },
       //#region @backend
@@ -236,14 +88,69 @@ class FiredevStorage {
       //#endregion
     }
   }
+  //#endregion
 
+  //#region public methods
 
-  private action = (defaultValue: any,
-    storageEngine
+  //#region public methods  / for
+  //#region @browser
+  public for(onlyInThisComponentClass?: Function): Omit<FiredevStorage, 'for' | 'in'> {
+    this.onlyInThisComponentClass = onlyInThisComponentClass;
+    return this as Omit<FiredevStorage, 'for' | 'in'>;
+  }
+  //#endregion
+  //#endregion
+
+  //#region public methods  / with default value
+  public withDefaultValue(defaultValue?: any): any {
+    // log.i(`["${}"]`)
+    return this.action(defaultValue, this.getEngine(), this.engine)
+  }
+  //#endregion
+
+  //#region public methods / with options
+  withOptions(options: {
+    /**
+     * default value
+     */
+    defaultValue?: any;
+    transformFrom?: (valueFromDb: any) => any,
+    transformTo?: (valueThatGetToDB: any) => any,
+  }) {
+    const { defaultValue, transformFrom, transformTo } = (options || {}) as any;
+    return this.action(
+      defaultValue ? defaultValue : this.defaultValue,
+      this.getEngine(),
+      this.engine,
+      transformFrom,
+      transformTo,
+    );
+  }
+  //#endregion
+
+  //#endregion
+
+  private getEngine() {
+    switch (this.engine) {
       //#region @browser
-      : StorType
-    //#endregion
-    ,
+      case 'localstorage':
+        return storLocalStorage;
+      case 'indexeddb':
+        return storIndexdDb;
+      //#endregion
+      //#region @backend
+      case 'file':
+        return new FileStor(this.filePath);
+      case 'json':
+        return new FileStor(this.filePath, true);
+      //#endregion
+    }
+  }
+
+  private action = (
+    defaultValue: any,
+    storageEngine: Models.StorType,
+    engine: Models.StorgeEngine,
     transformFrom?,
     transformTo?,
   ) => {
@@ -254,48 +161,84 @@ class FiredevStorage {
     return (target: any, memberName: string) => {
       let currentValue: any = target[memberName];
 
-      const setItemDefaultValue = () => {
-        storageEngine.getItem(keyValue(this.onlyInThisComponentClass, memberName), (err, valFromDb) => {
-          // target[memberName] = valFromDb;
-          currentValue = transformFrom ? transformFrom(valFromDb) : valFromDb;
-          log.i(`["${memberName}"] set default value for `, valFromDb)
-        })
+      const setItemDefaultValue = async () => {
+        const promise = new Promise<void>((resolve, reject) => {
+          storageEngine.getItem(keyValue(this.onlyInThisComponentClass, memberName), (err, valFromDb) => {
+            // target[memberName] = valFromDb;
+            currentValue = transformFrom ? transformFrom(valFromDb) : valFromDb;
+            log.info(`["${memberName}"] set default value for `, valFromDb);
+            resolve()
+          })
+        });
+        FiredevStorage.pendingOperatins.push({
+          promise,
+          engine,
+          id: 'setting default value'
+        });
+        await promise;
       }
 
       if (defaultValue !== void 0) {
-        storageEngine.getItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), (err, val) => {
-          log.i(`["${memberName}"] was set default value for  ? `, val)
-          if (val) {
-            setItemDefaultValue();
-          } else {
-            storageEngine.setItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), true, (err, v) => {
+        const promise = new Promise<void>((resolve, reject) => {
+          storageEngine.getItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), async (err, val) => {
+            log.info(`["${memberName}"] was set default value for  ? `, val)
+            if (val) {
+              resolve()
+              await setItemDefaultValue();
+            } else {
+              await new Promise<void>((res, rej) => {
+                storageEngine.setItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), true, (err, v) => {
+                  res();
+                })
+              });
 
-            })
-            storageEngine.setItem(keyValue(this.onlyInThisComponentClass, memberName),
-              transformTo ? transformTo(defaultValue) : defaultValue, (err, val) => {
+              await new Promise<void>((res, rej) => {
+                storageEngine.setItem(keyValue(this.onlyInThisComponentClass, memberName),
+                  transformTo ? transformTo(defaultValue) : defaultValue, (err, val) => {
+                    res();
+                  })
+              });
 
-              })
-
-            currentValue = defaultValue;
-            log.i(`["${memberName}"]  defaultValue "${memberName}"`, currentValue)
-          }
+              currentValue = defaultValue;
+              log.i(`["${memberName}"]  defaultValue "${memberName}"`, currentValue)
+              resolve()
+            }
+          });
         });
 
+        FiredevStorage.pendingOperatins.push({
+          promise,
+          engine,
+          id: 'setting default not nil value'
+        });
+        promise.then(() => {
+          console.log('DONE SETTIING NON TRIVAL')
+        })
       } else {
         setItemDefaultValue();
       }
 
       Object.defineProperty(target, memberName, {
         set: (newValue: any) => {
-          log.i(`setting item  "${memberName}" with new value `, newValue)
-          storageEngine.setItem(
-            keyValue(this.onlyInThisComponentClass, memberName),
-            transformTo ? transformTo(newValue) : newValue,
-            (err, savedValue) => {
-              log.i(`setting done "${memberName} `, savedValue)
-            }
-          )
+          const promise = new Promise<void>((resolve, reject) => {
+            storageEngine.setItem(
+              keyValue(this.onlyInThisComponentClass, memberName),
+              transformTo ? transformTo(newValue) : newValue,
+              (err, savedValue) => {
+                log.i(`setting done "${memberName} `, savedValue)
+                resolve();
+              }
+            );
+          });
+          FiredevStorage.pendingOperatins.push({
+            promise,
+            engine,
+            id: `setting item  "${memberName}" with new value:${newValue}`
+          });
           currentValue = newValue;
+          promise.then(() => {
+            console.log('DONE SETTIING')
+          })
         },
         get: () => currentValue,
       });

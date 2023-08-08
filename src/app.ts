@@ -1,49 +1,86 @@
-//#region @notForNpm
-
-import { List } from 'immutable';
-import { Stor } from './lib';
-
-
+//#region imports
+import { Firedev } from 'firedev';
+import { _ } from 'tnp-core';
+const host = 'http://localhost:4199';
+//#region @browser
+import { NgModule, NgZone, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { PreloadAllModules, RouterModule, Routes } from "@angular/router";
+//#endregion
+//#endregion
 
 //#region @browser
-import { NgModule } from '@angular/core';
-import { Component, OnInit } from '@angular/core';
 
+//#region routes
+const routes: Routes = [
+  // {
+  //   path: 'pazymodulerouterpath',
+  //   loadChildren: () => import('lazymodule')
+  //     .then(m => m.LazyModule),
+  // },
+];
+//#endregion
 
+//#region main component
 @Component({
   selector: 'app-firedev-storage',
-  template: 'hello from firedev-storage'
+  encapsulation: ViewEncapsulation.None,
+  styleUrls: ['./app.scss'],
+  templateUrl: './app.html',
 })
-export class FiredevStorageComponent implements OnInit {
-  constructor() { }
+export class FiredevStorageComponent {
+  async ngOnInit() {
 
-  ngOnInit() { }
+  }
 }
+//#endregion
 
+//#region main module
 @NgModule({
-  imports: [],
+  imports: [
+    RouterModule.forRoot(routes, {
+      useHash: true,
+      preloadingStrategy: PreloadAllModules,
+      enableTracing: false,
+      bindToComponentInputs: true
+    }),
+  ],
   exports: [FiredevStorageComponent],
   declarations: [FiredevStorageComponent],
   providers: [],
 })
 export class FiredevStorageModule { }
 //#endregion
+//#endregion
 
-//#region @backend
+//#region firedev start function
+async function start() {
+  // Firedev.enableProductionMode();
 
-class MyBackend {
-
-  @Stor.property.in.jsonFile('~/pinguin.json').withDefaultValue(List([]))
-  myListOfValue: List<string>;
-
+  const context = await Firedev.init({
+    host,
+    controllers: [
+      // PUT FIREDEV CONTORLLERS HERE
+    ],
+    entities: [
+      // PUT FIREDEV ENTITIES HERE
+    ],
+    //#region @websql
+    config: {
+      type: 'better-sqlite3',
+      database: 'tmp-db.sqlite',
+      logging: false,
+    }
+    //#endregion
+  });
+  //#region @backend
+  if (Firedev.isNode) {
+    context.node.app.get('/hello', (req, res) => {
+      res.send('Hello firedev-storage')
+    })
+  }
+  //#endregion
 }
-
-async function start(port: number) {
-  new MyBackend();
-}
+//#endregion
 
 export default start;
-
-//#endregion
-
-//#endregion
