@@ -1,16 +1,15 @@
 //#region imports
-import { Level, Log } from 'ng2-logger';
-import { Helpers, _ } from 'tnp-core';
-import { storIndexdDb, storLocalStorage, storeName } from './constants';
+import { _ } from 'tnp-core';
 import { keyDefaultValueAreadySet, keyValue } from './helpers';
 import { Models } from './models';
 import { FileStor } from './file-stor';
+//#region @browser
+import { storIndexdDb, storLocalStorage } from './constants';
+//#endregion
 //#endregion
 
 //#region constants
-const log = Log.create(storeName,
-  Level.INFO
-);
+const AWAITING_INTERVAL_TIME = 200;
 //#endregion
 
 //#region public api / uncahce
@@ -33,12 +32,38 @@ class FiredevStorage {
 
   //#region static
   private static pendingOperatins: Models.PendingOperation[] = [];
-  public static async awaitPendingOperatios(): Promise<void> {
-    console.log(`WAITING PENDING OPERATIONS: ${this.pendingOperatins.length}`)
-    const operations = this.pendingOperatins;
-    this.pendingOperatins.length = 0;
-    await Promise.all(operations);
-    console.log(`WAITING PENDING DONE: ${this.pendingOperatins.length}`);
+  private static id = 0;
+
+  /**
+   * TODO This is fine for now, but could be something smarter here
+   */
+  public static async awaitPendingOperatios(id = FiredevStorage.id++): Promise<void> {
+    // console.log('AWAITING')
+    if (id > Number.MAX_SAFE_INTEGER - 2) {
+      FiredevStorage.id = 0;
+      id = FiredevStorage.id++;
+    }
+    const pending = this.pendingOperatins as Models.PendingOperation[];
+    const toDeleteIndex = [];
+    for (let index = 0; index < pending.length; index++) {
+      const op = pending[index] as Models.PendingOperation;
+
+      if (!op.isDone) {
+        await new Promise<void>(async (resovle, reject) => {
+          setTimeout(async () => {
+            await this.awaitPendingOperatios(id);
+            resovle();
+          }, AWAITING_INTERVAL_TIME)
+        })
+        return;
+      } else {
+        toDeleteIndex.push(index);
+      }
+    }
+    for (let index = 0; index < toDeleteIndex.length; index++) {
+      const toDelete = toDeleteIndex[index];
+      pending.splice(toDelete, 1);
+    }
   }
 
   static get property() {
@@ -130,6 +155,9 @@ class FiredevStorage {
 
   //#endregion
 
+  //#region private methods
+
+  //#region private methods / get engine
   private getEngine() {
     switch (this.engine) {
       //#region @browser
@@ -146,10 +174,23 @@ class FiredevStorage {
       //#endregion
     }
   }
+  //#endregion
 
+  //#region private methods / end observer action
+  private endObserverAction(observe: Models.PendingOperation) {
+    // observe.subscribers.forEach(c => typeof c?.awaitId === 'function' && c());
+    observe.isDone = true;
+  }
+  //#endregion
+
+  //#region private methods / action
   private action = (
     defaultValue: any,
-    storageEngine: Models.StorType,
+    storageEngine
+      //#region @browser
+      : Models.StorType
+    //#endregion
+    ,
     engine: Models.StorgeEngine,
     transformFrom?,
     transformTo?,
@@ -162,29 +203,39 @@ class FiredevStorage {
       let currentValue: any = target[memberName];
 
       const setItemDefaultValue = async () => {
-        const promise = new Promise<void>((resolve, reject) => {
+        //#region settin default value
+        const observe = {
+          engine,
+          id: 'setting default value'
+        } as Models.PendingOperation;
+        FiredevStorage.pendingOperatins.push(observe);
+
+        await new Promise<void>((resolve, reject) => {
           storageEngine.getItem(keyValue(this.onlyInThisComponentClass, memberName), (err, valFromDb) => {
             // target[memberName] = valFromDb;
             currentValue = transformFrom ? transformFrom(valFromDb) : valFromDb;
-            log.info(`["${memberName}"] set default value for `, valFromDb);
-            resolve()
+            // log.info(`["${memberName}"] set default value for `, valFromDb);
+            resolve();
+            this.endObserverAction(observe);
           })
         });
-        FiredevStorage.pendingOperatins.push({
-          promise,
-          engine,
-          id: 'setting default value'
-        });
-        await promise;
+        //#endregion
       }
 
       if (defaultValue !== void 0) {
-        const promise = new Promise<void>((resolve, reject) => {
+        //#region setting default value from db
+        const observe = {
+          engine,
+          id: 'setting not rivial default value'
+        } as Models.PendingOperation;
+        FiredevStorage.pendingOperatins.push(observe);
+
+        (new Promise<void>((resolve, reject) => {
           storageEngine.getItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), async (err, val) => {
-            log.info(`["${memberName}"] was set default value for  ? `, val)
+            // log.info(`["${memberName}"] was set default value for  ? `, val)
             if (val) {
-              resolve()
               await setItemDefaultValue();
+              resolve()
             } else {
               await new Promise<void>((res, rej) => {
                 storageEngine.setItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), true, (err, v) => {
@@ -200,52 +251,50 @@ class FiredevStorage {
               });
 
               currentValue = defaultValue;
-              log.i(`["${memberName}"]  defaultValue "${memberName}"`, currentValue)
+              // log.i(`["${memberName}"]  defaultValue "${memberName}"`, currentValue)
               resolve()
             }
           });
+        })).then(() => {
+          this.endObserverAction(observe);
         });
 
-        FiredevStorage.pendingOperatins.push({
-          promise,
-          engine,
-          id: 'setting default not nil value'
-        });
-        promise.then(() => {
-          console.log('DONE SETTIING NON TRIVAL')
-        })
+        //#endregion
       } else {
         setItemDefaultValue();
       }
 
       Object.defineProperty(target, memberName, {
         set: (newValue: any) => {
-          const promise = new Promise<void>((resolve, reject) => {
+          //#region setting new value on setter
+          const observe = {
+            engine,
+            id: 'setting in SET not rivial default value'
+          } as Models.PendingOperation;
+          FiredevStorage.pendingOperatins.push(observe);
+
+          (new Promise<void>((resolve, reject) => {
             storageEngine.setItem(
               keyValue(this.onlyInThisComponentClass, memberName),
               transformTo ? transformTo(newValue) : newValue,
               (err, savedValue) => {
-                log.i(`setting done "${memberName} `, savedValue)
                 resolve();
               }
             );
+          })).then(() => {
+            this.endObserverAction(observe);
           });
-          FiredevStorage.pendingOperatins.push({
-            promise,
-            engine,
-            id: `setting item  "${memberName}" with new value:${newValue}`
-          });
+          //#endregion
           currentValue = newValue;
-          promise.then(() => {
-            console.log('DONE SETTIING')
-          })
         },
         get: () => currentValue,
       });
     };
   };
+  //#endregion
+
+  //#endregion
 
 }
-
 
 export const Stor = FiredevStorage;
