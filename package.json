@@ -23,7 +23,8 @@
       "includeNodeModules": false,
       "cliBuildNoDts": false,
       "cliBuildObscure": false,
-      "cliBuildIncludeNodeModules": false
+      "cliBuildIncludeNodeModules": false,
+      "cliBuildUglify": false
     },
     "smartContainerTarget": "",
     "type": "isomorphic-lib",
@@ -311,5 +312,6 @@
   },
   "name": "firedev-storage",
   "version": "16.5.14",
-  "lastBuildTagHash": "ff8f1a2626d990c2cbce69eb57f2effb0d9c1cf0"
+  "lastBuildTagHash": "ff8f1a2626d990c2cbce69eb57f2effb0d9c1cf0",
+  "main": "dist/app.electron.js"
 }
