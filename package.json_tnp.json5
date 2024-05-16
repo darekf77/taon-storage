@@ -10,7 +10,6 @@
     npmFixes: [],
   },
 
-  linkedProjects: [],
   smartContainerBuildTarget: '',
   linkedRepos: [],
 
@@ -27,5 +26,5 @@
 
   smartContainerTarget: '',
   type: 'isomorphic-lib',
-  version: 'v4'
+  version: 'v4',
 }
