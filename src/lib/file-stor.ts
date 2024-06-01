@@ -1,4 +1,4 @@
-import { Helpers } from "tnp-core";
+import { Helpers } from "tnp-core/src";
 import { Models } from "./models";
 
 

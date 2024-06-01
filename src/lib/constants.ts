@@ -1,5 +1,5 @@
 //#region imports
-import { Helpers, _ } from "tnp-core";
+import { Helpers, _ } from "tnp-core/src";
 //#region @browser
 import * as localForge from 'localforage';
 //#endregion

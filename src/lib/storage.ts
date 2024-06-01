@@ -1,5 +1,5 @@
 //#region imports
-import { _ } from 'tnp-core';
+import { _ } from 'tnp-core/src';
 import { keyDefaultValueAreadySet, keyValue } from './helpers';
 import { Models } from './models';
 import { FileStor } from './file-stor';
