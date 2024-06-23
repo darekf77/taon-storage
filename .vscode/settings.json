@@ -105,5 +105,6 @@
   "editor.suggest.snippetsPreventQuickSuggestions": false,
   "editor.inlineSuggest.enabled": true,
   "tslint.alwaysShowRuleFailuresAsWarnings": false,
-  "prettier.endOfLine": "auto"
+  "prettier.endOfLine": "auto",
+  "prettier.prettierPath": "./node_modules/prettier"
 }
