@@ -1,15 +1,18 @@
 {
   "resources": [],
+
   "overrided": {
     "linkedFolders": [],
     "ignoreDepsPattern": [],
     "includeAsDev": [],
     "includeOnly": ["ng2-logger", "localforage", "immutable"],
     "dependencies": {},
-    "npmFixes": [],
+    "npmFixes": []
   },
+
   "smartContainerBuildTarget": "",
   "linkedRepos": [],
+
   "libReleaseOptions": {
     "nodts": false,
     "obscure": false,
@@ -18,9 +21,10 @@
     "cliBuildNoDts": false,
     "cliBuildObscure": false,
     "cliBuildIncludeNodeModules": false,
-    "cliBuildUglify": false,
+    "cliBuildUglify": false
   },
+
   "smartContainerTarget": "",
   "type": "isomorphic-lib",
-  "version": "v16",
+  "version": "v18"
 }
