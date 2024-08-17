@@ -336,7 +336,7 @@
     "zone.js": "~0.13.0"
   },
   "name": "firedev-storage",
-  "version": "18.0.3",
+  "version": "18.0.4",
   "lastBuildTagHash": "c11a4a377ccee618ef1b8e5a06e21c37eba14b85",
   "main": "dist/app.electron.js"
 }
