@@ -332,7 +332,7 @@
     "zone.js": "~0.13.0"
   },
   "name": "taon-storage",
-  "version": "18.0.6",
+  "version": "18.0.7",
   "lastBuildTagHash": "c11a660742a8467fe7304cfe81f9e6185a9ca86c",
   "main": "dist/app.electron.js"
 }
