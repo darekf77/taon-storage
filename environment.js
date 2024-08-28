@@ -4,7 +4,7 @@ var { config } = { config: {} };
 
 config = {
 
-    domain: 'firedev-storage.example.domain.com',
+    domain: 'taon-storage.example.domain.com',
 
 
 }

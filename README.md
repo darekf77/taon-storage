@@ -1,4 +1,4 @@
-# firedev storage
+# taon storage
 
 Isomoric storage solution browser and nodejs.
 
@@ -9,19 +9,19 @@ Purpose of project:
 ## installation
 
 ```
-npm i -g firedev-storage
+npm i -g taon-storage
 ```
 
 ## import Stor
 ```ts
 
-import { Stor } from 'firedev-storage' // on NodeJS side
+import { Stor } from 'taon-storage' // on NodeJS side
 
-import { Stor } from 'firedev-storage/browser' // on browser side
+import { Stor } from 'taon-storage/browser' // on browser side
 
-// In firedev's apps you don't need to specify /folder
+// In taon's apps you don't need to specify /folder
 // just do thing like on NodeJS backend
-import { Stor } from 'firedev-storage' // firedev apps
+import { Stor } from 'taon-storage' // taon apps
 
 ```
 
@@ -29,10 +29,10 @@ import { Stor } from 'firedev-storage' // firedev apps
 ## Storing things in local storage in browser:
 
 ```ts
-import { Stor } from 'firedev-storage'
+import { Stor } from 'taon-storage'
 
-export class FiredevAdmin {
-  @Stor.in.localstorage.for(FiredevAdmin).withDefaultValue(false)
+export class TaonAdmin {
+  @Stor.in.localstorage.for(TaonAdmin).withDefaultValue(false)
   editMode: boolean
 }
 ```
@@ -41,11 +41,11 @@ export class FiredevAdmin {
 ## Storing things in indexddb in browser:
 
 ```ts
-import { Stor } from 'firedev-storage'
+import { Stor } from 'taon-storage'
 
-export class FiredevAdmin {
+export class TaonAdmin {
 
-  @Stor.in.indexedb.for(FiredevAdmin). withOptions({
+  @Stor.in.indexedb.for(TaonAdmin). withOptions({
     transformFrom: (valueFromDb: string) => new Blob([valueFromDb]),
     transformTo: (valueThatGetToDB: Blob) => valueThatGetToDB.text(),
   })
@@ -57,9 +57,9 @@ export class FiredevAdmin {
 ## Storing things in file on backend NodeJS:
 
 ```ts
-import { Stor } from 'firedev-storage'
+import { Stor } from 'taon-storage'
 
-export class FiredevAdmin {
+export class TaonAdmin {
   @Stor.in.file('/etc/hosts').withDefaultValue('localhost: 127.0.0.1')
   hostsFile: string
 
@@ -72,10 +72,10 @@ export class FiredevAdmin {
 ## Storing things in json file on backend NodeJS:
 
 ```ts
-import { Stor } from 'firedev-storage';
+import { Stor } from 'taon-storage';
 import { List } from 'immutable'; // needs to be used
 
-export class FiredevAdmin {
+export class TaonAdmin {
 
  class MyBackend {
 

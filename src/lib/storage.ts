@@ -28,7 +28,7 @@ export function uncache<CLASS_FUNCTION = any>(onlyInThisComponentClass: CLASS_FU
 }
 //#endregion
 
-class FiredevStorage {
+class TaonStorage {
 
   //#region static
   private static pendingOperatins: Models.PendingOperation[] = [];
@@ -37,11 +37,11 @@ class FiredevStorage {
   /**
    * TODO This is fine for now, but could be something smarter here
    */
-  public static async awaitPendingOperatios(id = FiredevStorage.id++): Promise<void> {
+  public static async awaitPendingOperatios(id = TaonStorage.id++): Promise<void> {
     // console.log('AWAITING')
     if (id > Number.MAX_SAFE_INTEGER - 2) {
-      FiredevStorage.id = 0;
-      id = FiredevStorage.id++;
+      TaonStorage.id = 0;
+      id = TaonStorage.id++;
     }
     const pending = this.pendingOperatins as Models.PendingOperation[];
     const toDeleteIndex = [];
@@ -67,7 +67,7 @@ class FiredevStorage {
   }
 
   static get property() {
-    return new FiredevStorage();
+    return new TaonStorage();
   }
   //#endregion
 
@@ -90,11 +90,11 @@ class FiredevStorage {
     return {
       get indexedb() {
         that.engine = 'indexeddb';
-        return that as Omit<FiredevStorage, 'in'>;
+        return that as Omit<TaonStorage, 'in'>;
       },
       get localstorage() {
         that.engine = 'localstorage';
-        return that as Omit<FiredevStorage, 'in'>;
+        return that as Omit<TaonStorage, 'in'>;
       },
       //#region @backend
       /**
@@ -103,12 +103,12 @@ class FiredevStorage {
       file(filePath: string) {
         that.engine = 'file';
         that.filePath = filePath;
-        return that as Omit<FiredevStorage, 'in' | 'for'>;
+        return that as Omit<TaonStorage, 'in' | 'for'>;
       },
       jsonFile(filePath: string) {
         that.engine = 'json'
         that.filePath = filePath;
-        return that as Omit<FiredevStorage, 'in' | 'for'>;
+        return that as Omit<TaonStorage, 'in' | 'for'>;
       },
       //#endregion
     }
@@ -119,9 +119,9 @@ class FiredevStorage {
 
   //#region public methods  / for
   //#region @browser
-  public for(onlyInThisComponentClass?: Function): Omit<FiredevStorage, 'for' | 'in'> {
+  public for(onlyInThisComponentClass?: Function): Omit<TaonStorage, 'for' | 'in'> {
     this.onlyInThisComponentClass = onlyInThisComponentClass;
-    return this as Omit<FiredevStorage, 'for' | 'in'>;
+    return this as Omit<TaonStorage, 'for' | 'in'>;
   }
   //#endregion
   //#endregion
@@ -208,7 +208,7 @@ class FiredevStorage {
           engine,
           id: 'setting default value'
         } as Models.PendingOperation;
-        FiredevStorage.pendingOperatins.push(observe);
+        TaonStorage.pendingOperatins.push(observe);
 
         await new Promise<void>((resolve, reject) => {
           storageEngine.getItem(keyValue(this.onlyInThisComponentClass, memberName), (err, valFromDb) => {
@@ -228,7 +228,7 @@ class FiredevStorage {
           engine,
           id: 'setting not rivial default value'
         } as Models.PendingOperation;
-        FiredevStorage.pendingOperatins.push(observe);
+        TaonStorage.pendingOperatins.push(observe);
 
         (new Promise<void>((resolve, reject) => {
           storageEngine.getItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), async (err, val) => {
@@ -271,7 +271,7 @@ class FiredevStorage {
             engine,
             id: 'setting in SET not rivial default value'
           } as Models.PendingOperation;
-          FiredevStorage.pendingOperatins.push(observe);
+          TaonStorage.pendingOperatins.push(observe);
 
           (new Promise<void>((resolve, reject) => {
             storageEngine.setItem(
@@ -297,4 +297,4 @@ class FiredevStorage {
 
 }
 
-export const Stor = FiredevStorage;
+export const Stor = TaonStorage;

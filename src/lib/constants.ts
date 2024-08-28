@@ -6,7 +6,7 @@ import * as localForge from 'localforage';
 //#endregion
 
 //#region constants / store name
-export const storeName = 'firedev-storage_'
+export const storeName = 'taon-storage_'
   //#region @browser
   + window?.location.port;
 //#endregion

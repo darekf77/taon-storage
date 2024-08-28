@@ -4,10 +4,10 @@
     "strictNullChecks": false,
     "rootDir": "./src",
     "paths": {
-      "firedev-storage": [
+      "taon-storage": [
         "./src/lib"
       ],
-      "firedev-storage/*": [
+      "taon-storage/*": [
         "./src/lib/*"
       ]
     }

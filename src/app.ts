@@ -1,5 +1,5 @@
 // //#region imports
-// import { Firedev } from 'firedev';
+// import { Taon } from 'taon';
 // import { _ } from 'tnp-core';
 // const host = 'http://localhost:4199';
 // //#region @browser
@@ -23,12 +23,12 @@
 
 // //#region main component
 // @Component({
-//   selector: 'app-firedev-storage',
+//   selector: 'app-taon-storage',
 //   encapsulation: ViewEncapsulation.None,
 //   styleUrls: ['./app.scss'],
 //   templateUrl: './app.html',
 // })
-// export class FiredevStorageComponent {
+// export class TaonStorageComponent {
 //   async ngOnInit() {
 
 //   }
@@ -45,19 +45,19 @@
 //       bindToComponentInputs: true
 //     }),
 //   ],
-//   exports: [FiredevStorageComponent],
-//   declarations: [FiredevStorageComponent],
+//   exports: [TaonStorageComponent],
+//   declarations: [TaonStorageComponent],
 //   providers: [],
 // })
-// export class FiredevStorageModule { }
+// export class TaonStorageModule { }
 // //#endregion
 // //#endregion
 
-// //#region firedev start function
+// //#region taon start function
 // async function start() {
-//   // Firedev.enableProductionMode();
+//   // Taon.enableProductionMode();
 
-//   const context = await Firedev.init({
+//   const context = await Taon.init({
 //     host,
 //     controllers: [
 //       // PUT FIREDEV CONTORLLERS HERE
@@ -74,9 +74,9 @@
 //     //#endregion
 //   });
 //   //#region @backend
-//   if (Firedev.isNode) {
+//   if (Taon.isNode) {
 //     // context.node.app.get('/hello', (req, res) => {
-//     //   res.send('Hello firedev-storage')
+//     //   res.send('Hello taon-storage')
 //     // })
 //   }
 //   //#endregion
