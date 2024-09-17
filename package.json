@@ -13,6 +13,7 @@
       "dependencies": {},
       "npmFixes": []
     },
+    "sholdGenerateAutogenIndexFile": true,
     "smartContainerBuildTarget": "",
     "linkedRepos": [],
     "libReleaseOptions": {
@@ -296,7 +297,7 @@
     "taon": "^18",
     "taon-storage": "18.0.9",
     "taon-type-sql": "18.0.10",
-    "taon-typeorm": "18.0.8",
+    "taon-typeorm": "18.0.9",
     "task.js": "0.1.5",
     "threads": "1.7.0",
     "tnp": "~18.0.10",
@@ -321,7 +322,7 @@
     "uuid": "10.0.0",
     "validator": "13.5.2",
     "video.js": "8.3.0",
-    "vpn-split": "~18.0.8",
+    "vpn-split": "~18.0.9",
     "vscode": "1.1.37",
     "wait-on": "7.0.1",
     "watch": "1.0.2",
