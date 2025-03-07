@@ -9,6 +9,7 @@
     "dependencies": {},
     "npmFixes": []
   },
+
   "sholdGenerateAutogenIndexFile": true,
   "smartContainerBuildTarget": "",
   "linkedRepos": [],
@@ -26,5 +27,6 @@
 
   "smartContainerTarget": "",
   "type": "isomorphic-lib",
-  "version": "v18"
+  "version": "v18",
+  "packageJsonOverride": {}
 }
