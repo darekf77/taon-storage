@@ -1,30 +1,13 @@
 {
-  "resources": [],
-
-  "overrided": {
-    "linkedFolders": [],
-    "ignoreDepsPattern": [],
-    "includeAsDev": [],
-    "includeOnly": ["ng2-logger", "localforage", "immutable"],
-    "dependencies": {},
-    "npmFixes": []
-  },
-  "sholdGenerateAutogenIndexFile": true,
-  "smartContainerBuildTarget": "",
-  "linkedRepos": [],
-
-  "libReleaseOptions": {
-    "nodts": false,
-    "obscure": false,
-    "ugly": false,
-    "includeNodeModules": false,
-    "cliBuildNoDts": false,
-    "cliBuildObscure": false,
-    "cliBuildIncludeNodeModules": false,
-    "cliBuildUglify": false
-  },
-
-  "smartContainerTarget": "",
   "type": "isomorphic-lib",
-  "version": "v18"
+  "version": "v18",
+  "dependenciesNamesForNpmLib": ["ng2-logger", "localforage", "immutable"],
+
+  "autoReleaseConfigAllowedItems": [{
+    "artifactName": "npm-lib-and-cli-tool"
+  }],
+
+  "resources": [],
+  "sholdGenerateAutogenIndexFile": true,
+  "packageJsonOverride": {}
 }
