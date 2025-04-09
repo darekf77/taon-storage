@@ -1,6 +1,6 @@
 {
   "name": "taon-storage",
-  "version": "18.0.31",
+  "version": "18.0.32",
   "author": "Dariusz Filipiak",
   "dependencies": {
     "@angular-builders/custom-webpack": "~18.0.0",
