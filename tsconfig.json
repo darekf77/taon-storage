@@ -4,15 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strictNullChecks": false,
-    "rootDir": "./src",
-    "paths": {
-      "taon-storage": [
-        "./src/lib"
-      ],
-      "taon-storage/*": [
-        "./src/lib/*"
-      ]
-    }
+    "rootDir": "./src"
   },
   "include": [
     "src/**/*"

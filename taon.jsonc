@@ -9,5 +9,7 @@
 
   "resources": [],
   "sholdGenerateAutogenIndexFile": true,
-  "packageJsonOverride": {}
+  "packageJsonOverride": {
+    "author": "Dariusz Filipiak"
+  }
 }
