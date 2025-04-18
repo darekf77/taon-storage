@@ -1,6 +1,6 @@
 {
   "type": "isomorphic-lib",
-  "version": "v18",
+  "version": "v19",
   "dependenciesNamesForNpmLib": ["ng2-logger", "localforage", "immutable"],
 
   "autoReleaseConfigAllowedItems": [{
