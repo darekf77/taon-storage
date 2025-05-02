@@ -4,10 +4,16 @@
     "strictNullChecks": false,
     "rootDir": "./src",
     "paths": {
-      "taon-storage": [
+      "@lib": [
         "./src/lib"
       ],
-      "taon-storage/*": [
+      "@lib/*": [
+        "./src/lib/*"
+      ],
+      "taon-storage/src": [
+        "./src/lib"
+      ],
+      "taon-storage/src/*": [
         "./src/lib/*"
       ]
     }
