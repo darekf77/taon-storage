@@ -1,6 +1,6 @@
 {
   "name": "taon-storage",
-  "version": "19.0.12",
+  "version": "19.0.13",
   "author": "Dariusz Filipiak",
   "dependencies": {
     "@angular-builders/custom-webpack": "~19.0.1",
@@ -324,5 +324,6 @@
     "yup": "~1.0.0-beta.8",
     "zone.js": "~0.13.0"
   },
+  "main": "dist/app.electron.js",
   "bin": {}
 }
