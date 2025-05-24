@@ -1,6 +1,6 @@
 {
   "name": "taon-storage",
-  "version": "19.0.17",
+  "version": "19.0.18",
   "scripts": {
     "taon build:lib": "taon build:lib",
     "taon build:watch:app": "taon build:watch:app",
