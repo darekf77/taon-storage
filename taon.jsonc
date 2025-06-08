@@ -13,7 +13,7 @@
 
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
-    "scripts": {},
-    "description": "Description for taon-storage. Hello world!"
+    "description": "Description for taon-storage. Hello world!",
+    "scripts": {}
   }
 }
