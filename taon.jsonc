@@ -2,6 +2,7 @@
   "type": "isomorphic-lib",
   "version": "v19",
   "dependenciesNamesForNpmLib": ["ng2-logger", "localforage", "immutable"],
+  "appId": "com.domain.example.taon-storage",
 
   "autoReleaseConfigAllowedItems": [{
     "artifactName": "npm-lib-and-cli-tool"
@@ -9,9 +10,10 @@
 
   "resources": [],
   "sholdGenerateAutogenIndexFile": true,
+
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
-
-    "scripts": {}
+    "scripts": {},
+    "description": "Description for taon-storage. Hello world!"
   }
 }
