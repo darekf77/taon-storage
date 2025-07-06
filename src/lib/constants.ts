@@ -1,28 +1,19 @@
 //#region imports
-import { Helpers, _ } from "tnp-core/src";
-//#region @browser
-import * as localForge from 'localforage';
-//#endregion
+import * as localForge from 'localforage'; // @browser
+import { Helpers, _ } from 'tnp-core/src';
 //#endregion
 
 //#region constants / store name
-export const storeName = 'taon-storage_'
-  //#region @browser
-  + window?.location.port;
-//#endregion
+let win: any;
+if (typeof window !== 'undefined') {
+  win = window;
+}
+win = win || globalThis;
+
+export const storeName = 'taon-storage_' + win?.location?.port;
 //#endregion
 
-//#region constants / environment
-let environment = {} as any;
-//#region @backend
-// @ts-ignore
-environment = global['ENV'];
-//#endregion
-//#region @browser
-// @ts-ignore
-environment = window['ENV'];
-//#endregion
-//#endregion
+let environment = globalThis['ENV'];
 
 //#region constant / stor local storage
 const websql = Helpers.isWebSQL ? 'websql' : '';
@@ -33,8 +24,7 @@ export const storLocalStorage = localForge.createInstance({
     storeName,
     'LOCALSTORAGE',
     _.kebabCase(environment?.currentProjectGenericName) + websql,
-  ].join('_')
-  , // + _.kebabCase(window.location.origin),
+  ].join('_'), // + _.kebabCase(window.location.origin),
 }) as any; // TODO UNCOMMENT any
 //#endregion
 //#endregion
@@ -47,7 +37,7 @@ export const storIndexdDb = localForge.createInstance({
     storeName,
     'INDEXEDDB',
     _.kebabCase(environment?.currentProjectGenericName) + websql,
-  ].join('_')
+  ].join('_'),
 }) as any; // TODO UNCOMMENT any
 //#endregion
 //#endregion
