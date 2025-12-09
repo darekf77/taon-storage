@@ -5,7 +5,8 @@
   "appId": "com.domain.example.taon-storage",
 
   "autoReleaseConfigAllowedItems": [{
-    "artifactName": "npm-lib-and-cli-tool"
+    "artifactName": "npm-lib-and-cli-tool",
+    "taskName": "npm"
   }],
 
   "resources": [],
