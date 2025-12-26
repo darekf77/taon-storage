@@ -1,300 +1,596 @@
-//#region imports
-import { _ } from 'tnp-core/src';
-import { keyDefaultValueAreadySet, keyValue } from './helpers';
-import { Models } from './models';
-import { FileStor } from './file-stor';
-//#region @browser
-import { storIndexdDb, storLocalStorage } from './constants';
-//#endregion
-//#endregion
+/* taon-storage (native, SSR-safe) */
+import { UtilsOs, _ } from 'tnp-core/src';
+export type StorageEngine = 'localstorage' | 'indexeddb' | 'file' | 'json';
 
-//#region constants
-const AWAITING_INTERVAL_TIME = 200;
-//#endregion
-
-//#region public api / uncahce
-export function uncache<CLASS_FUNCTION = any>(onlyInThisComponentClass: CLASS_FUNCTION, propertyValueToDeleteFromCache: keyof CLASS_FUNCTION) {
-  if (!onlyInThisComponentClass) { // @ts-ignore
-    onlyInThisComponentClass = { name: '__GLOBAL_NAMESPACE__' };
-  }
-  return Promise.all([
-    //#region @browser
-    storLocalStorage.removeItem(keyValue(onlyInThisComponentClass, propertyValueToDeleteFromCache)),
-    storLocalStorage.removeItem(keyDefaultValueAreadySet(onlyInThisComponentClass, propertyValueToDeleteFromCache)),
-    storIndexdDb.removeItem(keyValue(onlyInThisComponentClass, propertyValueToDeleteFromCache)),
-    storIndexdDb.removeItem(keyDefaultValueAreadySet(onlyInThisComponentClass, propertyValueToDeleteFromCache)),
-    //#endregion
-  ])
+export interface StorOptions<T = any> {
+  defaultValue?: T;
+  transformFrom?: (valueFromDb: any) => T;
+  transformTo?: (valueToDb: T) => any;
 }
-//#endregion
 
-class TaonStorage {
+export interface PendingOperation {
+  engine: StorageEngine;
+  id: string;
+  isDone: boolean;
+}
 
-  //#region static
-  private static pendingOperatins: Models.PendingOperation[] = [];
-  private static id = 0;
+type ClassLike = Function | { name: string } | undefined;
 
-  /**
-   * TODO This is fine for now, but could be something smarter here
-   */
-  public static async awaitPendingOperatios(id = TaonStorage.id++): Promise<void> {
-    // console.log('AWAITING')
-    if (id > Number.MAX_SAFE_INTEGER - 2) {
-      TaonStorage.id = 0;
-      id = TaonStorage.id++;
+const isBrowser =
+  typeof window !== 'undefined' &&
+  typeof document !== 'undefined' &&
+  typeof navigator !== 'undefined';
+
+function getGlobalEnv(): any {
+  return (globalThis as any)?.ENV;
+}
+
+function safeLocationPort(): string {
+  try {
+    return (globalThis as any)?.location?.port || 'no-port';
+  } catch {
+    return 'no-port';
+  }
+}
+
+/**
+ * Keeps the spirit of your old `storeName = taon-storage_<port>`
+ * plus project name namespacing (but without localForage).
+ */
+export const storeName = `taon-storage_${safeLocationPort()}`;
+
+function defaultNamespace(): string {
+  const env = getGlobalEnv();
+  const project = _.kebabCase(env?.currentProjectGenericName ?? '');
+  return project ? `${storeName}_${project}` : storeName;
+}
+
+/**
+ * Central config (optional).
+ * You can set it once at app bootstrap if you want a stable namespace.
+ */
+export const StorConfig = {
+  namespace: defaultNamespace(),
+  indexedDb: {
+    dbName: `${defaultNamespace()}_INDEXEDDB`,
+    storeName: 'keyvaluepairs',
+  },
+};
+
+function normalizeScopeClass(cls: ClassLike): { name: string } {
+  if (!cls) return { name: '__GLOBAL_NAMESPACE__' };
+  // if it's a function/class
+  if (typeof cls === 'function')
+    return { name: (cls as any).name || '__ANON__' };
+  // if it's already object with name
+  return { name: (cls as any).name || '__ANON__' };
+}
+
+export function keyValue(scopeClass: ClassLike, memberName: string) {
+  const c = normalizeScopeClass(scopeClass);
+  return `${StorConfig.namespace}::taon.storage.class.${c.name}.prop.${memberName}`;
+}
+
+export function keyDefaultValueAlreadySet(
+  scopeClass: ClassLike,
+  memberName: string,
+) {
+  return `${keyValue(scopeClass, memberName)}::defaultvalueisset`;
+}
+
+/** Back-compat alias (your old typo) */
+export const keyDefaultValueAreadySet = keyDefaultValueAlreadySet;
+
+/* ---------------------------
+ * Stores
+ * -------------------------- */
+
+interface AsyncKVStore {
+  getItem<T = any>(key: string): Promise<T | undefined>;
+  setItem<T = any>(key: string, value: T): Promise<void>;
+  removeItem(key: string): Promise<void>;
+}
+
+class NoopStore implements AsyncKVStore {
+  async getItem<T>(_key: string): Promise<T | undefined> {
+    return undefined;
+  }
+  async setItem<T>(_key: string, _value: T): Promise<void> {
+    // noop
+  }
+  async removeItem(_key: string): Promise<void> {
+    // noop
+  }
+}
+
+class BrowserLocalStorageStore implements AsyncKVStore {
+  private ls(): Storage | undefined {
+    if (!isBrowser) return undefined;
+    try {
+      return window.localStorage;
+    } catch {
+      return undefined;
     }
-    const pending = this.pendingOperatins as Models.PendingOperation[];
-    const toDeleteIndex = [];
-    for (let index = 0; index < pending.length; index++) {
-      const op = pending[index] as Models.PendingOperation;
+  }
 
-      if (!op.isDone) {
-        await new Promise<void>(async (resovle, reject) => {
-          setTimeout(async () => {
-            await this.awaitPendingOperatios(id);
-            resovle();
-          }, AWAITING_INTERVAL_TIME)
-        })
-        return;
-      } else {
-        toDeleteIndex.push(index);
+  async getItem<T>(key: string): Promise<T | undefined> {
+    const ls = this.ls();
+    if (!ls) return undefined;
+
+    const raw = ls.getItem(key);
+    if (raw === null) return undefined;
+
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      // if something stored plain string by older versions
+      return raw as unknown as T;
+    }
+  }
+
+  async setItem<T>(key: string, value: T): Promise<void> {
+    const ls = this.ls();
+    if (!ls) return;
+
+    try {
+      ls.setItem(key, JSON.stringify(value));
+    } catch {
+      // last resort: try as string
+      try {
+        ls.setItem(key, String(value));
+      } catch {
+        // ignore (quota/private mode)
       }
     }
-    for (let index = 0; index < toDeleteIndex.length; index++) {
-      const toDelete = toDeleteIndex[index];
-      pending.splice(toDelete, 1);
+  }
+
+  async removeItem(key: string): Promise<void> {
+    const ls = this.ls();
+    if (!ls) return;
+    try {
+      ls.removeItem(key);
+    } catch {
+      // ignore
     }
+  }
+}
+
+class BrowserIndexedDbStore implements AsyncKVStore {
+  private dbPromise: Promise<IDBDatabase> | null = null;
+
+  private openDb(): Promise<IDBDatabase> {
+    if (!isBrowser || !(window as any).indexedDB) {
+      return Promise.reject(new Error('IndexedDB not available'));
+    }
+    if (this.dbPromise) return this.dbPromise;
+
+    const { dbName, storeName } = StorConfig.indexedDb;
+
+    this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open(dbName, 1);
+
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName);
+        }
+      };
+
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+
+    return this.dbPromise;
+  }
+
+  private async withStore<T>(
+    mode: IDBTransactionMode,
+    fn: (store: IDBObjectStore) => IDBRequest<T>,
+  ): Promise<T> {
+    const db = await this.openDb();
+    const { storeName } = StorConfig.indexedDb;
+
+    return await new Promise<T>((resolve, reject) => {
+      const tx = db.transaction(storeName, mode);
+      const store = tx.objectStore(storeName);
+      const req = fn(store);
+
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+
+      tx.onabort = () => reject(tx.error);
+      // tx.oncomplete => nothing
+    });
+  }
+
+  async getItem<T>(key: string): Promise<T | undefined> {
+    try {
+      const result = await this.withStore('readonly', s => s.get(key));
+      return (result as any) === undefined ? undefined : (result as any);
+    } catch {
+      return undefined;
+    }
+  }
+
+  async setItem<T>(key: string, value: T): Promise<void> {
+    try {
+      await this.withStore('readwrite', s => s.put(value as any, key));
+    } catch {
+      // ignore
+    }
+  }
+
+  async removeItem(key: string): Promise<void> {
+    try {
+      await this.withStore('readwrite', s => s.delete(key) as any);
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/**
+ * Node-side file storage (optional). No top-level node imports (Angular-safe).
+ * Works only when executed in Node.
+ */
+class FileStor implements AsyncKVStore {
+  constructor(
+    private filePath: string,
+    private useJSON = false,
+  ) {}
+
+  private isNodeRuntime() {
+    return UtilsOs.isNode;
+    // return (
+    //   typeof process !== 'undefined' &&
+    //   !!(process as any).versions?.node &&
+    //   typeof (globalThis as any).window === 'undefined'
+    // );
+  }
+
+  async setItem<T>(_key: string, value: T): Promise<void> {
+    if (!this.isNodeRuntime()) return;
+    //#region @backendFunc
+    const fs = await import('node:fs/promises');
+    const data = this.useJSON ? JSON.stringify(value, null, 2) : (value as any);
+
+    if (this.useJSON) {
+      await fs.writeFile(this.filePath, String(data), 'utf8');
+    } else {
+      await fs.writeFile(this.filePath, String(data), 'utf8');
+    }
+    //#endregion
+  }
+
+  async getItem<T>(_key: string): Promise<T | undefined> {
+    if (!this.isNodeRuntime()) return undefined;
+    //#region @backendFunc
+    const fs = await import('node:fs/promises');
+
+    try {
+      const buf = await fs.readFile(this.filePath, 'utf8');
+      if (!this.useJSON) return buf as any as T;
+      return JSON.parse(buf) as T;
+    } catch {
+      return undefined;
+    }
+    //#endregion
+  }
+
+  async removeItem(_key: string): Promise<void> {
+    if (!this.isNodeRuntime()) return;
+    //#region @backendFunc
+    const fs = await import('node:fs/promises');
+    try {
+      await fs.rm(this.filePath, { force: true });
+    } catch {
+      // ignore
+    }
+    //#endregion
+  }
+}
+
+/* ---------------------------
+ * Pending ops (so you can still await)
+ * -------------------------- */
+
+class StorPending {
+  static pending: PendingOperation[] = [];
+  static id = 0;
+  static AWAITING_INTERVAL_TIME = 200;
+
+  static async awaitPendingOperations(id = StorPending.id++): Promise<void> {
+    if (id > Number.MAX_SAFE_INTEGER - 2) {
+      StorPending.id = 0;
+      id = StorPending.id++;
+    }
+
+    const pending = StorPending.pending;
+
+    for (const op of pending) {
+      if (!op.isDone) {
+        await new Promise<void>(resolve => {
+          setTimeout(async () => {
+            await StorPending.awaitPendingOperations(id);
+            resolve();
+          }, StorPending.AWAITING_INTERVAL_TIME);
+        });
+        return;
+      }
+    }
+
+    // cleanup
+    StorPending.pending = pending.filter(p => !p.isDone);
+  }
+
+  static start(engine: StorageEngine, id: string): PendingOperation {
+    const op: PendingOperation = { engine, id, isDone: false };
+    StorPending.pending.push(op);
+    return op;
+  }
+
+  static done(op: PendingOperation) {
+    op.isDone = true;
+  }
+}
+
+/* ---------------------------
+ * Decorator builder
+ * -------------------------- */
+
+class StorPropertyBuilder {
+  private scopeClass?: ClassLike;
+  private engine: StorageEngine;
+  private store: AsyncKVStore;
+  private filePath?: string;
+  private useJsonFile = false;
+
+  constructor(engine: StorageEngine, store: AsyncKVStore) {
+    this.engine = engine;
+    this.store = store;
+  }
+
+  for(scopeClass?: ClassLike) {
+    this.scopeClass = scopeClass;
+    return this;
+  }
+
+  withDefaultValue<T = any>(defaultValue: T) {
+    return this.withOptions<T>({ defaultValue });
+  }
+
+  withOptions<T = any>(options: StorOptions<T>) {
+    const scopeClass = this.scopeClass;
+
+    // per-instance state (fixes prototype-closure sharing)
+    const values = new WeakMap<object, T>();
+    const initStarted = new WeakMap<object, Promise<void>>();
+
+    const ensureInit = (instance: object) => {
+      if (initStarted.has(instance)) return;
+
+      const op = StorPending.start(this.engine, 'init');
+      const p = (async () => {
+        const memberName = (ensureInit as any).__memberName as string;
+
+        const kVal = keyValue(scopeClass, memberName);
+        const kDef = keyDefaultValueAlreadySet(scopeClass, memberName);
+
+        const defProvided = options.defaultValue !== undefined;
+
+        if (
+          !isBrowser &&
+          (this.engine === 'localstorage' || this.engine === 'indexeddb')
+        ) {
+          // SSR: just set defaults, no storage
+          if (defProvided) values.set(instance, options.defaultValue as T);
+          return;
+        }
+
+        // Browser (or node file/json)
+        if (defProvided) {
+          const already = await this.store.getItem<boolean>(kDef);
+          if (already) {
+            const stored = await this.store.getItem<any>(kVal);
+            const v = options.transformFrom
+              ? options.transformFrom(stored)
+              : stored;
+            if (v !== undefined) values.set(instance, v as T);
+            else values.set(instance, options.defaultValue as T);
+          } else {
+            await this.store.setItem(kDef, true);
+            const toDb = options.transformTo
+              ? options.transformTo(options.defaultValue as T)
+              : (options.defaultValue as any);
+            await this.store.setItem(kVal, toDb);
+            values.set(instance, options.defaultValue as T);
+          }
+        } else {
+          const stored = await this.store.getItem<any>(kVal);
+          const v = options.transformFrom
+            ? options.transformFrom(stored)
+            : stored;
+          if (v !== undefined) values.set(instance, v as T);
+        }
+      })()
+        .catch(() => {
+          // swallow, keep app alive
+        })
+        .finally(() => StorPending.done(op));
+
+      initStarted.set(instance, p);
+    };
+
+    return (target: any, memberName: string) => {
+      (ensureInit as any).__memberName = memberName;
+
+      Object.defineProperty(target, memberName, {
+        configurable: true,
+        enumerable: true,
+        get: function () {
+          ensureInit(this);
+
+          if (values.has(this)) return values.get(this);
+          if (options.defaultValue !== undefined) return options.defaultValue;
+          return undefined;
+        },
+        set: function (newValue: T) {
+          values.set(this, newValue);
+
+          // if this is the first interaction, init will happen anyway
+          ensureInit(this);
+
+          const op = StorPending.start(
+            (target as any)?.engine ?? 'localstorage',
+            'set',
+          );
+
+          const scope = scopeClass;
+          const kVal = keyValue(scope, memberName);
+
+          const toDb = options.transformTo
+            ? options.transformTo(newValue)
+            : (newValue as any);
+
+          Promise.resolve()
+            .then(() => target as any)
+            .then(() => this as any)
+            .then(() => this as any)
+            .then(async () => {
+              // If we are SSR + browser engine => no-op
+              if (!isBrowser && (options as any)) return;
+              await (options as any); // no-op line to keep TS happy about chaining in some builds
+            })
+            .catch(() => {
+              // ignore
+            });
+
+          // do real store write (async)
+          Promise.resolve()
+            .then(async () => {
+              // SSR guard for browser engines
+              if (!isBrowser && (StorPropertyInLocalStorage as any)) {
+                return;
+              }
+              await thisStoreForEngineWrite(this, kVal, toDb);
+            })
+            .catch(() => {
+              // ignore
+            })
+            .finally(() => StorPending.done(op));
+        },
+      });
+
+      // small helper to keep closure clean
+      const builderStore = this.store;
+      const builderEngine = this.engine;
+
+      async function thisStoreForEngineWrite(
+        _instance: any,
+        key: string,
+        value: any,
+      ) {
+        // If browser engines but not browser, skip.
+        if (
+          !isBrowser &&
+          (builderEngine === 'localstorage' || builderEngine === 'indexeddb')
+        )
+          return;
+        await builderStore.setItem(key, value);
+      }
+    };
+  }
+
+  /* optional node-only engines (same builder) */
+  file(filePath: string) {
+    this.engine = 'file';
+    this.filePath = filePath;
+    this.useJsonFile = false;
+    this.store = new FileStor(filePath, false);
+    return this;
+  }
+
+  jsonFile(filePath: string) {
+    this.engine = 'json';
+    this.filePath = filePath;
+    this.useJsonFile = true;
+    this.store = new FileStor(filePath, true);
+    return this;
+  }
+}
+
+/* ---------------------------
+ * Public: clean API exports
+ * -------------------------- */
+
+const localStorageStore: AsyncKVStore = isBrowser
+  ? new BrowserLocalStorageStore()
+  : new NoopStore();
+const indexedDbStore: AsyncKVStore = isBrowser
+  ? new BrowserIndexedDbStore()
+  : new NoopStore();
+
+export class StorPropertyInLocalStorage {
+  static for(scopeClass?: ClassLike) {
+    return new StorPropertyBuilder('localstorage', localStorageStore).for(
+      scopeClass,
+    );
+  }
+}
+
+export class StorPropertyInIndexedDb {
+  static for(scopeClass?: ClassLike) {
+    return new StorPropertyBuilder('indexeddb', indexedDbStore).for(scopeClass);
+  }
+}
+
+/**
+ * Helpers
+ */
+export async function uncache<CLASS_FUNCTION = any>(
+  onlyInThisComponentClass: CLASS_FUNCTION,
+  propertyValueToDeleteFromCache: keyof CLASS_FUNCTION,
+) {
+  const scope =
+    onlyInThisComponentClass || ({ name: '__GLOBAL_NAMESPACE__' } as any);
+  const prop = String(propertyValueToDeleteFromCache);
+
+  await Promise.all([
+    localStorageStore.removeItem(keyValue(scope as any, prop)),
+    localStorageStore.removeItem(keyDefaultValueAlreadySet(scope as any, prop)),
+    indexedDbStore.removeItem(keyValue(scope as any, prop)),
+    indexedDbStore.removeItem(keyDefaultValueAlreadySet(scope as any, prop)),
+  ]);
+}
+
+/**
+ * Backwards-compatible facade:
+ * Stor.property.in.localstorage.for(...).withDefaultValue(...)
+ */
+class TaonStorageFacade {
+  static async awaitPendingOperatios() {
+    await StorPending.awaitPendingOperations();
   }
 
   static get property() {
-    return new TaonStorage();
-  }
-  //#endregion
-
-  //#region private fields
-  private onlyInThisComponentClass?: Function;
-  private defaultValue: any;
-  private engine: Models.StorgeEngine;
-
-
-  //#region private fields / file path
-  //#region @backend
-  private filePath: string;
-  //#endregion
-  //#endregion
-  //#endregion
-
-  //#region public getters
-  public get in() {
-    const that = this;
     return {
-      get indexedb() {
-        that.engine = 'indexeddb';
-        return that as Omit<TaonStorage, 'in'>;
-      },
-      get localstorage() {
-        that.engine = 'localstorage';
-        return that as Omit<TaonStorage, 'in'>;
-      },
-      //#region @backend
-      /**
-       * may be relative or absolute
-       */
-      file(filePath: string) {
-        that.engine = 'file';
-        that.filePath = filePath;
-        return that as Omit<TaonStorage, 'in' | 'for'>;
-      },
-      jsonFile(filePath: string) {
-        that.engine = 'json'
-        that.filePath = filePath;
-        return that as Omit<TaonStorage, 'in' | 'for'>;
-      },
-      //#endregion
-    }
-  }
-  //#endregion
-
-  //#region public methods
-
-  //#region public methods  / for
-  //#region @browser
-  public for(onlyInThisComponentClass?: Function): Omit<TaonStorage, 'for' | 'in'> {
-    this.onlyInThisComponentClass = onlyInThisComponentClass;
-    return this as Omit<TaonStorage, 'for' | 'in'>;
-  }
-  //#endregion
-  //#endregion
-
-  //#region public methods  / with default value
-  public withDefaultValue(defaultValue?: any): any {
-    // log.i(`["${}"]`)
-    return this.action(defaultValue, this.getEngine(), this.engine)
-  }
-  //#endregion
-
-  //#region public methods / with options
-  withOptions(options: {
-    /**
-     * default value
-     */
-    defaultValue?: any;
-    transformFrom?: (valueFromDb: any) => any,
-    transformTo?: (valueThatGetToDB: any) => any,
-  }) {
-    const { defaultValue, transformFrom, transformTo } = (options || {}) as any;
-    return this.action(
-      defaultValue ? defaultValue : this.defaultValue,
-      this.getEngine(),
-      this.engine,
-      transformFrom,
-      transformTo,
-    );
-  }
-  //#endregion
-
-  //#endregion
-
-  //#region private methods
-
-  //#region private methods / get engine
-  private getEngine() {
-    switch (this.engine) {
-      //#region @browser
-      case 'localstorage':
-        return storLocalStorage;
-      case 'indexeddb':
-        return storIndexdDb;
-      //#endregion
-      //#region @backend
-      case 'file':
-        return new FileStor(this.filePath);
-      case 'json':
-        return new FileStor(this.filePath, true);
-      //#endregion
-    }
-  }
-  //#endregion
-
-  //#region private methods / end observer action
-  private endObserverAction(observe: Models.PendingOperation) {
-    // observe.subscribers.forEach(c => typeof c?.awaitId === 'function' && c());
-    observe.isDone = true;
-  }
-  //#endregion
-
-  //#region private methods / action
-  private action = (
-    defaultValue: any,
-    storageEngine
-      //#region @browser
-      : Models.StorType
-    //#endregion
-    ,
-    engine: Models.StorgeEngine,
-    transformFrom?,
-    transformTo?,
-  ) => {
-    if (!this.onlyInThisComponentClass) { // @ts-ignore
-      this.onlyInThisComponentClass = { name: '__GLOBAL_NAMESPACE__' };
-    }
-
-    return (target: any, memberName: string) => {
-      let currentValue: any = target[memberName];
-
-      const setItemDefaultValue = async () => {
-        //#region settin default value
-        const observe = {
-          engine,
-          id: 'setting default value'
-        } as Models.PendingOperation;
-        TaonStorage.pendingOperatins.push(observe);
-
-        await new Promise<void>((resolve, reject) => {
-          storageEngine.getItem(keyValue(this.onlyInThisComponentClass, memberName), (err, valFromDb) => {
-            // target[memberName] = valFromDb;
-            currentValue = transformFrom ? transformFrom(valFromDb) : valFromDb;
-            // log.info(`["${memberName}"] set default value for `, valFromDb);
-            resolve();
-            this.endObserverAction(observe);
-          })
-        });
-        //#endregion
-      }
-
-      if (defaultValue !== void 0) {
-        //#region setting default value from db
-        const observe = {
-          engine,
-          id: 'setting not rivial default value'
-        } as Models.PendingOperation;
-        TaonStorage.pendingOperatins.push(observe);
-
-        (new Promise<void>((resolve, reject) => {
-          storageEngine.getItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), async (err, val) => {
-            // log.info(`["${memberName}"] was set default value for  ? `, val)
-            if (val) {
-              await setItemDefaultValue();
-              resolve()
-            } else {
-              await new Promise<void>((res, rej) => {
-                storageEngine.setItem(keyDefaultValueAreadySet(this.onlyInThisComponentClass, memberName), true, (err, v) => {
-                  res();
-                })
-              });
-
-              await new Promise<void>((res, rej) => {
-                storageEngine.setItem(keyValue(this.onlyInThisComponentClass, memberName),
-                  transformTo ? transformTo(defaultValue) : defaultValue, (err, val) => {
-                    res();
-                  })
-              });
-
-              currentValue = defaultValue;
-              // log.i(`["${memberName}"]  defaultValue "${memberName}"`, currentValue)
-              resolve()
-            }
-          });
-        })).then(() => {
-          this.endObserverAction(observe);
-        });
-
-        //#endregion
-      } else {
-        setItemDefaultValue();
-      }
-
-      Object.defineProperty(target, memberName, {
-        set: (newValue: any) => {
-          //#region setting new value on setter
-          const observe = {
-            engine,
-            id: 'setting in SET not rivial default value'
-          } as Models.PendingOperation;
-          TaonStorage.pendingOperatins.push(observe);
-
-          (new Promise<void>((resolve, reject) => {
-            storageEngine.setItem(
-              keyValue(this.onlyInThisComponentClass, memberName),
-              transformTo ? transformTo(newValue) : newValue,
-              (err, savedValue) => {
-                resolve();
-              }
-            );
-          })).then(() => {
-            this.endObserverAction(observe);
-          });
-          //#endregion
-          currentValue = newValue;
+      in: {
+        get localstorage() {
+          return new StorPropertyBuilder('localstorage', localStorageStore);
         },
-        get: () => currentValue,
-      });
+        get indexedb() {
+          return new StorPropertyBuilder('indexeddb', indexedDbStore);
+        },
+        // node-only (safe: dynamic import inside FileStor)
+        file(filePath: string) {
+          return new StorPropertyBuilder('file', new FileStor(filePath, false));
+        },
+        jsonFile(filePath: string) {
+          return new StorPropertyBuilder('json', new FileStor(filePath, true));
+        },
+      },
     };
-  };
-  //#endregion
-
-  //#endregion
-
+  }
 }
 
-export const Stor = TaonStorage;
+export const Stor = TaonStorageFacade;
