@@ -21,10 +21,6 @@ const isBrowser =
   typeof document !== 'undefined' &&
   typeof navigator !== 'undefined';
 
-function getGlobalEnv(): any {
-  return (globalThis as any)?.ENV;
-}
-
 function safeLocationPort(): string {
   try {
     return (globalThis as any)?.location?.port || 'no-port';
@@ -40,8 +36,7 @@ function safeLocationPort(): string {
 export const storeName = `taon-storage_${safeLocationPort()}`;
 
 function defaultNamespace(): string {
-  const env = getGlobalEnv();
-  const project = _.kebabCase(env?.currentProjectGenericName ?? '');
+  const project = _.kebabCase(globalThis['CURRENT_PROJECT_GENERIC_NAME'] ?? '');
   return project ? `${storeName}_${project}` : storeName;
 }
 
