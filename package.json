@@ -1,6 +1,6 @@
 {
   "name": "taon-storage",
-  "version": "21.0.18",
+  "version": "21.0.19",
   "scripts": {
     "taon init": "taon init",
     "taon start": "taon start",
@@ -283,7 +283,6 @@
     "jsdom": "27.2.0",
     "json-stringify-safe": "^5.0.1",
     "json10": "~21.0.0",
-    "json10-writer": "~21.0.0",
     "json5": "~2.2.3",
     "json5-writer": "0.2.0",
     "jsonwebtoken": "~9.0.2",
