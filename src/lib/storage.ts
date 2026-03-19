@@ -563,7 +563,7 @@ export async function uncache<CLASS_FUNCTION = any>(
  * Stor.property.in.localstorage.for(...).withDefaultValue(...)
  */
 class TaonStorageFacade {
-  static async awaitPendingOperatios() {
+  static async awaitPendingOperations(): Promise<void> {
     await StorPending.awaitPendingOperations();
   }
 
