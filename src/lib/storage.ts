@@ -1,6 +1,11 @@
 /* taon-storage (native, SSR-safe) */
 import { UtilsOs, _ } from 'tnp-core/src';
-export type StorageEngine = 'localstorage' | 'indexeddb' | 'file' | 'json';
+export type StorageEngine =
+  | 'localstorage'
+  | 'sessionstorage'
+  | 'indexeddb'
+  | 'file'
+  | 'json';
 
 export interface StorOptions<T = any> {
   defaultValue?: T;
@@ -99,7 +104,7 @@ class NoopStore implements AsyncKVStore {
 }
 
 class BrowserLocalStorageStore implements AsyncKVStore {
-  private ls(): Storage | undefined {
+  protected ls(): Storage | undefined {
     if (!isBrowser) return undefined;
     try {
       return window.localStorage;
@@ -146,6 +151,17 @@ class BrowserLocalStorageStore implements AsyncKVStore {
       ls.removeItem(key);
     } catch {
       // ignore
+    }
+  }
+}
+
+class BrowserSessionStorageStore extends BrowserLocalStorageStore {
+  protected ls(): Storage | undefined {
+    if (!isBrowser) return undefined;
+    try {
+      return window.sessionStorage;
+    } catch {
+      return undefined;
     }
   }
 }
@@ -521,6 +537,11 @@ class StorPropertyBuilder {
 const localStorageStore: AsyncKVStore = isBrowser
   ? new BrowserLocalStorageStore()
   : new NoopStore();
+
+const sessionStorageStore: AsyncKVStore = isBrowser
+  ? new BrowserSessionStorageStore()
+  : new NoopStore();
+
 const indexedDbStore: AsyncKVStore = isBrowser
   ? new BrowserIndexedDbStore()
   : new NoopStore();
@@ -528,6 +549,14 @@ const indexedDbStore: AsyncKVStore = isBrowser
 export class StorPropertyInLocalStorage {
   static for(scopeClass?: ClassLike) {
     return new StorPropertyBuilder('localstorage', localStorageStore).for(
+      scopeClass,
+    );
+  }
+}
+
+export class StorPropertyInSessionStorage {
+  static for(scopeClass?: ClassLike) {
+    return new StorPropertyBuilder('sessionstorage', sessionStorageStore).for(
       scopeClass,
     );
   }
@@ -567,11 +596,15 @@ class TaonStorageFacade {
     await StorPending.awaitPendingOperations();
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   static get property() {
     return {
       in: {
         get localstorage() {
           return new StorPropertyBuilder('localstorage', localStorageStore);
+        },
+        get sessionstorage() {
+          return new StorPropertyBuilder('sessionstorage', localStorageStore);
         },
         get indexedb() {
           return new StorPropertyBuilder('indexeddb', indexedDbStore);
