@@ -7,10 +7,12 @@ interface StorOptions<T = any> {
   defaultValue?: T;
   transformFrom?: (valueFromDb: any) => T;
   transformTo?: (valueToDb: T) => any;
-  key?: string;
-  //#region @backend
-  filePath?: string;
-  //#endregion
+
+  /**
+   * property key in class
+   * OR path to file/json
+   */
+  keyOrPath?: string;
 }
 
 const isBrowser = UtilsOs.isBrowser;
@@ -335,14 +337,24 @@ export namespace TaonStor {
     options: StorOptions<T>,
     scopeClass?: ClassLike,
   ): StorSignal<T> {
-    return create(local, scopeClass, options.key ?? '__global__', options);
+    return create(
+      local,
+      scopeClass,
+      options.keyOrPath ?? '__global__',
+      options,
+    );
   }
 
   export function inSessionStorage<T>(
     options: StorOptions<T>,
     scopeClass?: ClassLike,
   ): StorSignal<T> {
-    return create(session, scopeClass, options.key ?? '__global__', options);
+    return create(
+      session,
+      scopeClass,
+      options.keyOrPath ?? '__global__',
+      options,
+    );
   }
 
   export function inIndexedDbStorage<T>(
@@ -352,7 +364,7 @@ export namespace TaonStor {
     return create(
       indexedDBInstace,
       scopeClass,
-      options.key ?? '__global__',
+      options.keyOrPath ?? '__global__',
       options,
     );
   }
@@ -362,8 +374,13 @@ export namespace TaonStor {
     scopeClass?: ClassLike,
   ): StorSignal<T> {
     //#region @backendFunc
-    const fileStor = new FileStor(options.filePath, false);
-    return create(fileStor, scopeClass, options.key ?? '__global__', options);
+    const fileStor = new FileStor(options.keyOrPath, false);
+    return create(
+      fileStor,
+      scopeClass,
+      options.keyOrPath ?? '__global__',
+      options,
+    );
     //#endregion
   }
 
@@ -372,8 +389,13 @@ export namespace TaonStor {
     scopeClass?: ClassLike,
   ): StorSignal<T> {
     //#region @backendFunc
-    const fileStor = new FileStor(options.filePath, true);
-    return create(fileStor, scopeClass, options.key ?? '__global__', options);
+    const fileStor = new FileStor(options.keyOrPath, true);
+    return create(
+      fileStor,
+      scopeClass,
+      options.keyOrPath ?? '__global__',
+      options,
+    );
     //#endregion
   }
 
