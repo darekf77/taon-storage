@@ -195,7 +195,7 @@
     "**/src/**"
   ],
 
-  "window.title": "npm/taon-dev/taon-storage  [ ${activeEditorShort} ]",
+  "window.title": "taon-dev/taon-storage () [ ${activeEditorShort}]",
 
   "json.schemas": [
     {
