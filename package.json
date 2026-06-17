@@ -1,6 +1,6 @@
 {
   "name": "taon-storage",
-  "version": "21.0.37",
+  "version": "21.0.38",
   "scripts": {
     "taon init": "taon init",
     "taon start": "taon start",
@@ -454,5 +454,9 @@
     "@parcel/watcher-linux-x64-glibc": "2.5.1",
     "@parcel/watcher-win32-x64-msvc": "2.5.1"
   },
-  "bin": {}
+  "bin": {
+    "taon-storage": "bin/taon-storage",
+    "taon-storage-debug": "bin/taon-storage-debug",
+    "taon-storage-debug-brk": "bin/taon-storage-debug-brk"
+  }
 }
