@@ -1,6 +1,6 @@
 {
   "name": "taon-storage",
-  "version": "21.0.39",
+  "version": "21.0.37",
   "scripts": {
     "taon init": "taon init",
     "taon start": "taon start",
@@ -147,6 +147,7 @@
     "@tailwindcss/postcss": "~4.3.0",
     "@taon-dev/api-workers": "~21.0.0",
     "@taon-dev/cloud": "~21.0.0",
+    "@taon-dev/i18n": "~21.0.0",
     "@taon-dev/session": "~21.0.0",
     "@testdeck/jest": "~0.3.3",
     "@testdeck/mocha": "~0.3.3",
