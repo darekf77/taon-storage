@@ -1,5 +1,5 @@
 import { signal, WritableSignal } from '@angular/core';
-import { _, UtilsOs } from 'tnp-core/src';
+import { _, fse, UtilsOs } from 'tnp-core/src';
 
 //#region use all of this in new implementation
 
@@ -213,13 +213,13 @@ class FileStor implements AsyncKVStore {
   async setItem<T>(_key: string, value: T): Promise<void> {
     if (!this.isNodeRuntime()) return;
     //#region @backendFunc
-    const fs = await import('node:fs/promises');
+
     const data = this.useJSON ? JSON.stringify(value, null, 2) : (value as any);
 
     if (this.useJSON) {
-      await fs.writeFile(this.filePath, String(data), 'utf8');
+      await fse.writeFile(this.filePath, String(data), 'utf8');
     } else {
-      await fs.writeFile(this.filePath, String(data), 'utf8');
+      await fse.writeFile(this.filePath, String(data), 'utf8');
     }
     //#endregion
   }
@@ -227,10 +227,9 @@ class FileStor implements AsyncKVStore {
   async getItem<T>(_key: string): Promise<T | undefined> {
     if (!this.isNodeRuntime()) return undefined;
     //#region @backendFunc
-    const fs = await import('node:fs/promises');
 
     try {
-      const buf = await fs.readFile(this.filePath, 'utf8');
+      const buf = await fse.readFile(this.filePath, 'utf8');
       if (!this.useJSON) return buf as any as T;
       return JSON.parse(buf) as T;
     } catch {
@@ -242,9 +241,9 @@ class FileStor implements AsyncKVStore {
   async removeItem(_key: string): Promise<void> {
     if (!this.isNodeRuntime()) return;
     //#region @backendFunc
-    const fs = await import('node:fs/promises');
+
     try {
-      await fs.rm(this.filePath, { force: true });
+      await fse.rm(this.filePath, { force: true });
     } catch {
       // ignore
     }

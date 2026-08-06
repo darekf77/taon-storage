@@ -1,6 +1,6 @@
 {
   "name": "taon-storage",
-  "version": "21.0.43",
+  "version": "21.0.36",
   "scripts": {
     "taon init": "taon init",
     "taon start": "taon start",
@@ -256,6 +256,7 @@
     "express-rate-limit": "~8.1.0",
     "express-session": "~1.18.2",
     "fast-glob": "~3.3.2",
+    "fast-xml-parser": "~5.10.1",
     "favicons": "~7.2.0",
     "file-loader": "~1.1.11",
     "file-saver": "2.0.5",
