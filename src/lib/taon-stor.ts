@@ -261,6 +261,8 @@ const ALL_READY: Promise<void>[] = [];
 export interface StorSignal<T> {
   (): T;
   set(v: T): Promise<void>;
+
+  update(updateFn: (value: T) => T): Promise<void>;
   ready(): Promise<void>;
   signal: WritableSignal<T>;
 }
@@ -308,6 +310,10 @@ function createStorSignal<T>(
     const toDb = options.transformTo ? options.transformTo(v) : (v as any);
 
     await store.setItem(key, toDb);
+  };
+
+  fn.update = async (updateFn: (value: T) => T) => {
+    await fn.set(updateFn(s()));
   };
 
   fn.ready = () => readyPromise;
