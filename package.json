@@ -1,6 +1,6 @@
 {
   "name": "taon-storage",
-  "version": "21.0.54",
+  "version": "21.0.56",
   "scripts": {
     "taon init": "taon init",
     "taon start": "taon start",
